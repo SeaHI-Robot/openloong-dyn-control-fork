@@ -1,0 +1,5 @@
+GaitSheduler
+=============
+
+.. doxygenclass:: GaitScheduler
+   :members:

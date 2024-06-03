@@ -1,0 +1,5 @@
+JoyStickInterpreter
+=====================
+
+.. doxygenclass:: JoyStickInterpreter
+   :members:

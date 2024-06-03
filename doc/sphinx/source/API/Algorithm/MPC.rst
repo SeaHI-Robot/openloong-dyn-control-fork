@@ -1,0 +1,5 @@
+MPC
+===
+
+.. doxygenclass:: MPC
+   :members:
