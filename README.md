@@ -1,11 +1,8 @@
-<div style="text-align: center;">
-    <img src="./assets/logo.png" width="200"/>
-    <p>OpenLoong Dynamics Control<br>
-    <sub>基于 MPC 与 WBC 的仿人机器人运动控制框架</sub>
-    </p>
-</div>
+![](./assets/logo.png)
 
 # OpenLoong Dynamics Control
+
+## 基于 MPC 与 WBC 的仿人机器人运动控制框架
 
 欢迎访问 🐉 OpenLoong 开源项目代码仓库！
 
