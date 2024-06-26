@@ -1,10 +1,8 @@
-<div>
-<div align="center">
+<div style="text-align: center;">
     <img src="./assets/logo.png" width="200"/>
     <p>OpenLoong Dynamics Control<br>
     <sub>基于 MPC 与 WBC 的仿人机器人运动控制框架</sub>
     </p>
-</div>
 </div>
 
 # OpenLoong Dynamics Control
