@@ -1,20 +1,22 @@
-# OpenLoong Dynamics Control 
+![](./assets/logo.png)
 
-# 基于MPC与WBC的仿人机器人运动控制框架
+# OpenLoong Dynamics Control
 
-​        欢迎访问OpenLoong开源项目代码仓库！
+## 基于 MPC 与 WBC 的仿人机器人运动控制框架
 
-​        OpenLoong开源项目是由人形机器人（上海）有限公司、上海人形机器人制造业创新中心与开放原子开源基金会（OpenAtom Foundation）运营的开源项目，本仓库提供了一套基于MPC与WBC的仿人机器人控制框架，可部署在Mujoco仿真平台上，基于上海人形机器人创新中心“青龙”机器人模型，提供行走、跳跃、盲踩障碍物三种运动示例。
+欢迎访问 🐉 OpenLoong 开源项目代码仓库！
 
-## **项目特点**                
+OpenLoong开源项目是由人形机器人（上海）有限公司、上海人形机器人制造业创新中心与开放原子开源基金会（OpenAtom Foundation）共同运营的开源项目。本仓库提供了一套基于 MPC 与 WBC 的仿人机器人控制框架，可部署在 Mujoco 仿真平台上。基于上海人形机器人创新中心“青龙”机器人模型，提供[行走](https://atomgit.com/guoxudong/openloong-dyn-control/blob/master/demo/walk_wbc.cpp)、[跳跃](https://atomgit.com/guoxudong/openloong-dyn-control/blob/master/demo/jump_mpc.cpp)、[盲踩障碍物](https://atomgit.com/guoxudong/openloong-dyn-control/blob/master/demo/walk_mpc_wbc.cpp)三种运动示例。
 
-​       **易部署** 提供全面的代码运行环境部署解决方案，以便用户能够轻松配置其所需的工作环境，本代码仓库包含了主要依赖，无需进行众多第三方库的安装，简化整个部署过程。
+## 项目特点
 
-​        **可扩展** 控制框架结构采用分层模块化设计，旨在提高系统的可维护性和可扩展性，系统各功能模块在逻辑和功能上具有明确的界限，为二次开发提供了更加友好的环境，使开发人员能够更轻松地对系统进行功能定制和扩展。
+- **易部署** 提供全面的代码运行环境部署解决方案，以便用户能够轻松配置其所需的工作环境，本代码仓库包含了主要依赖，无需进行众多第三方库的安装，简化整个部署过程。
 
-​        **易理解** 代码结构简洁，遵循针对功能进行模块封装的代码设计原则，应用总线进行模块间数据交互，减少封装冗余，有助于降低代码复杂度；算法实现采用“读取-计算-写入”的简单逻辑，提高代码的可理解性。
+- **可扩展** 控制框架结构采用分层模块化设计，旨在提高系统的可维护性和可扩展性，系统各功能模块在逻辑和功能上具有明确的界限，为二次开发提供了更加友好的环境，使开发人员能够更轻松地对系统进行功能定制和扩展。
 
-## **环境安装**
+- **易理解** 代码结构简洁，遵循针对功能进行模块封装的代码设计原则，应用总线进行模块间数据交互，减少封装冗余，有助于降低代码复杂度；算法实现采用“读取-计算-写入”的简单逻辑，提高代码的可理解性。
+
+## 环境安装
 
 **环境建议**
 
@@ -23,13 +25,16 @@
 
 **依赖安装**
 
-​        本仓库为基于mujoco针对“青龙”人形机器人进行制仿真测试，mujoco的仿真引擎、pinocchio动力学库、eigen、quill记录工具、GLFW图形库、jsoncpp解析库等也包含到了仓库之中，但仿真界面需系统支持openGL，需安装
+​本仓库为基于 mujoco 针对“青龙”人形机器人进行制仿真测试， mujoco 的仿真引擎、pinocchio 动力学库、eigen、quill 记录工具、GLFW 图形库、jsoncpp 解析库等也包含到了仓库之中，但仿真界面需系统支持 openGL，需安装
 
 ```Bash
+# Update & Install Dependencies
+sudo apt-get update
+sudo apt install git cmake gcc-11 g++-11
 sudo apt install libglu1-mesa-dev freeglut3-dev
 ```
 
-## **使用指南**
+## 使用指南
 
 **代码获取与编译**
 
@@ -45,12 +50,16 @@ cmake ..
 make
 
 # mujoco simulation
-./Walk_mpc_wbc #or ./Walk_wbc or ./Jump_mpc
+./walk_mpc_wbc #or ./walk_wbc or ./jump_mpc
 ```
+
+**仿真效果**
+
+![demo](assets/demo.png)
 
 ## **代码说明**
 
-​        参考本代码API接口[说明文档](http://cc.com)。
+​参考本代码API接口[说明文档](http://cc.com)。
 
 **主要前缀后缀指代说明**
 
@@ -71,9 +80,9 @@ make
 | *_cur*           | 当前实际值                 |
 | *_rot*           | 坐标变换矩阵               |
 
-## **开发指南**
+## 开发指南
 
-**关键控制参数说明**    
+**关键控制参数说明**
 
 - MPC权重
 
@@ -137,7 +146,7 @@ DataBus::LegState legState=DataBus::RS;                //初始腾空腿
 
 - 关节参数
 
-```JavaScript
+```json
 //JointCtrConfig.json
    "Joint-ankle-l-pitch" : {
       "PVT_LPF_Fc" : 20,
@@ -153,7 +162,7 @@ DataBus::LegState legState=DataBus::RS;                //初始腾空腿
 **模型替换说明**
 
 1. 模型文件
-   
+
    a. **xml类型模型文件导出**
 
 准备机器人的URDF文件和mesh文件(STL格式)，添加用于mujoco编译的标签：
@@ -185,9 +194,9 @@ DataBus::LegState legState=DataBus::RS;                //初始腾空腿
 
 其中，*sensor*安装在上述定义的*site*处，*site*并不参与碰撞以及物体质量和惯性的计算，无需担心附加的site会对仿真产生不利的影响。
 
-​	b. **关于模型的修改及替换**
+​ b. **关于模型的修改及替换**
 
-以此项目的青龙机器人“AzureDragon为“例：*base_link*下并联了头*Link_head_*、腰*Link_waist_*、左臂*Link*_arm_l_、右臂*Link*_arm_r_等四个串联分支。其中左臂、右臂分支依次串联了7个自由度，头部分支串联了2个自由度。腰分支串联了俯仰*Link_waist_pitch*、滚转*Link_waist_roll*、偏航*Link_waist_yaw*等3个自由度后，并联了左腿、右腿两个分支，每条腿上依次串联了三个髋关节*Link_*hip_、一个膝关节*Link_knee_*、两个踝关节*Link_ankle_*等6个自由度。至此，完成了31个自由度的配置。
+以此项目的青龙机器人“AzureDragon为“例：*base_link*下并联了头*Link_head_*、腰*Link_waist_*、左臂*Link**arm_l*、右臂*Link**arm_r_等四个串联分支。其中左臂、右臂分支依次串联了7个自由度，头部分支串联了2个自由度。腰分支串联了俯仰*Link_waist_pitch*、滚转*Link_waist_roll*、偏航*Link_waist_yaw*等3个自由度后，并联了左腿、右腿两个分支，每条腿上依次串联了三个髋关节*Link**hip_、一个膝关节*Link_knee_*、两个踝关节*Link_ankle_*等6个自由度。至此，完成了31个自由度的配置。
 
 可参考该串联系统，修改其中某些自由度的配置：
 
@@ -256,17 +265,17 @@ mjData* mj_data = mj_makeData(mj_model);
 
 传感器数据地址的访问方式亦是通过查询名称字符串锁定地址，添加或者删除传感器只需修改*MJ_Interface.h*中对应的传感器名称即可。
 
-## **参考文献**
+## 参考文献
 
-​        [1] D. Kim, J. D. Carlo, B. Katz, G. Bledt, S. Kim, Highly dynamic quadruped locomotion via whole-body impulse control and model predictive control. arXiv:1909.06586 (2019).
+[1] D. Kim, J. D. Carlo, B. Katz, G. Bledt, S. Kim, Highly dynamic quadruped locomotion via whole-body impulse control and model predictive control. arXiv:1909.06586 (2019).
 
-​        [2] Kim D, Jorgensen S J, Lee J, et al. Dynamic locomotion for passive-ankle biped robots and humanoids using whole-body locomotion control. arXiv:1901.08100 (2020).
+[2] Kim D, Jorgensen S J, Lee J, et al. Dynamic locomotion for passive-ankle biped robots and humanoids using whole-body locomotion control. arXiv:1901.08100 (2020).
 
-​        [3] Di Carlo J, Wensing P M, Katz B, et al. Dynamic locomotion in the mit  cheetah 3 through convex model-predictive control[C]//2018 IEEE/RSJ  international conference on intelligent robots and systems (IROS). IEEE, 2018: 1-9.
+[3] Di Carlo J, Wensing P M, Katz B, et al. Dynamic locomotion in the mit  cheetah 3 through convex model-predictive control[C]//2018 IEEE/RSJ  international conference on intelligent robots and systems (IROS). IEEE, 2018: 1-9.
 
-## **引用格式**
+## 引用格式
 
-​        若应用本开源项目中的代码，请以以下格式进行引用：
+若应用本开源项目中的代码，请以以下格式进行引用：
 
 ```JavaScript
 @software{Robot2024OpenLoong,
@@ -277,8 +286,10 @@ mjData* mj_data = mj_makeData(mj_model);
 }
 ```
 
-## **联系方式**
+## 联系方式
 
-​        欢迎各位开发者参与本代码库的优化与提高！
+欢迎各位开发者参与本代码库的优化与提高！
 
-​        您可以对现有内容进行意见评价、问题反馈、贡献您的原创内容等，对本代码的任何问题及意见，请联系web@openloong.org.cn
+[💬 新建讨论](https://atomgit.com/openloong/openloong-dyn-control/discussions/new/choose) | [📝 反馈问题](https://atomgit.com/openloong/openloong-dyn-control/issues/create) | [📨 变更请求](https://atomgit.com/openloong/openloong-dyn-control/changes)
+
+您可以对现有内容进行意见评价、问题反馈、贡献您的原创内容等，对本代码的任何问题及意见，请联系<web@openloong.org.cn>
