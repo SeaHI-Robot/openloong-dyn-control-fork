@@ -9,10 +9,6 @@ Feel free to use in any purpose, and cite OpenLoong-Dynamics-Control in any styl
 
 #include <utility>
 
-#include "pino_kin_dyn.h"
-
-#include <utility>
-
 Pin_KinDyn::Pin_KinDyn(std::string urdf_pathIn) {
     pinocchio::JointModelFreeFlyer root_joint;
     pinocchio::urdf::buildModel(urdf_pathIn,root_joint,model_biped);
@@ -91,7 +87,6 @@ void Pin_KinDyn::dataBusRead(const DataBus &robotState) {
 }
 
 void Pin_KinDyn::dataBusWrite(DataBus &robotState) {
-    // NOTE: for the following Jacobians, x=J*dq, both x and dq are defined in the world frame
     robotState.J_l=J_l;
     robotState.J_r=J_r;
     robotState.J_base=J_base;
@@ -102,6 +97,7 @@ void Pin_KinDyn::dataBusWrite(DataBus &robotState) {
     robotState.dJ_hd_l=dJ_hd_l;
     robotState.dJ_hd_r=dJ_hd_r;
     robotState.dJ_base=dJ_base;
+    robotState.J_hip_link=J_hip_link;
     robotState.fe_l_pos_W=fe_l_pos;
     robotState.fe_r_pos_W=fe_r_pos;
     robotState.fe_l_pos_L=fe_l_pos_body;
@@ -122,6 +118,8 @@ void Pin_KinDyn::dataBusWrite(DataBus &robotState) {
     robotState.hd_r_rot_L=hd_r_rot_body;
     robotState.hd_r_pos_W=hd_r_pos;
     robotState.hd_r_rot_W=hd_r_rot;
+    robotState.hip_link_pos=hip_link_pos;
+    robotState.hip_link_rot=hip_link_rot;
 
     robotState.dyn_M=dyn_M;
     robotState.dyn_M_inv=dyn_M_inv;
@@ -130,6 +128,9 @@ void Pin_KinDyn::dataBusWrite(DataBus &robotState) {
     robotState.dyn_Ag=dyn_Ag;
     robotState.dyn_dAg=dyn_dAg;
     robotState.dyn_Non=dyn_Non;
+
+    robotState.pCoM_W=CoM_pos;
+    robotState.Jcom_W=Jcom;
 
     robotState.inertia = inertia;  // w.r.t body frame
 

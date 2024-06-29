@@ -5,6 +5,7 @@ Feel free to use in any purpose, and cite OpenLoong-Dynamics-Control in any styl
  <https://atomgit.com/openloong/openloong-dyn-control.git>
  <web@openloong.org.cn>
 */
+
 #include "joystick_interpreter.h"
 
 void JoyStickInterpreter::setVxDesLPara(double vxDesLIn, double timeToReach) {
@@ -50,9 +51,13 @@ void JoyStickInterpreter::reset() {
     thetaZ=0;
 }
 
-void JoyStickInterpreter::setIniPos(double posX, double posY) {
+void JoyStickInterpreter::setIniPos(double posX, double posY, double thetaZ) {
     px_W=posX;
     py_W=posY;
+    this->thetaZ=thetaZ;
 }
+
+
+
 
 
