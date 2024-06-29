@@ -18,7 +18,7 @@ public:
     double stepHeight{0.1};
     double phi{0};    // phase varialbe for trajectory generation, must between 0 and 1
     double tSwing{0.4}; // swing time
-    Eigen::Vector3d posStart_W, posDes_W, hipPos_W;
+    Eigen::Vector3d posStart_W, posDes_W, hipPos_W, STPos_W;
     Eigen::Vector3d desV_W, curV_W;
     double desWz_W;
     Eigen::Vector3d base_pos;
@@ -34,4 +34,3 @@ private:
     double omegaZ_W;
     double hip_width;
 };
-

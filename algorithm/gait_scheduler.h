@@ -20,6 +20,7 @@ public:
     double FzThrehold{100};
     double Fz_L_m{0}, Fz_R_m{0};
     DataBus::LegState legState, legStateNext;
+    DataBus::MotionState motionState;
     GaitScheduler(double tSwingIn, double dtIn);
     void dataBusRead(const DataBus &robotState);
     void dataBusWrite(DataBus &robotState);
@@ -27,6 +28,9 @@ public:
     void stop();
     Eigen::VectorXd FLest,FRest;
     Eigen::VectorXd torJoint;
+
+    bool enableNextStep;
+    bool touchDown; // touch down event indicator
 private:
     Eigen::VectorXd fe_r_pos_W, fe_l_pos_W, swingStartPos_W, posHip_W, posST_W, hip_r_pos_W, hip_l_pos_W, dq;
     Eigen::VectorXd stanceStartPos_W;
@@ -34,6 +38,8 @@ private:
     Eigen::MatrixXd dyn_M, dyn_Non, J_l, J_r, dJ_l, dJ_r;
     double theta0;
     int model_nv;
+
 };
+
 
 

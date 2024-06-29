@@ -80,7 +80,7 @@ int main(int argc, const char** argv)
     auto resHand=kinDynSolver.computeInK_Hand(hd_l_rot_des,hd_l_pos_L_des,hd_r_rot_des,hd_r_pos_L_des);
     Eigen::VectorXd qIniDes=Eigen::VectorXd::Zero(mj_model->nq,1);
     qIniDes.block(7,0,mj_model->nq-7,1)=resLeg.jointPosRes+resHand.jointPosRes;
-    WBC_solv.setQini(qIniDes);
+    WBC_solv.setQini(qIniDes,RobotState.q);
 
     // register variable name for data logger
     logger.addIterm("simTime", 1);
@@ -137,8 +137,10 @@ int main(int argc, const char** argv)
             if (simTime > startWalkingTime) {
                 jsInterp.setWzDesLPara(0, 1);
                 jsInterp.setVxDesLPara(xv_des, 2.0); // jsInterp.setVxDesLPara(0.9,1);
+                RobotState.motionState = DataBus::Walk; // start walking
             } else
-                jsInterp.setIniPos(RobotState.q(0), RobotState.q(1));
+                jsInterp.setIniPos(RobotState.q(0), RobotState.q(1), RobotState.base_rpy(2));
+
             jsInterp.step();
             RobotState.js_pos_des(2) = stand_legLength + foot_height; // pos z is not assigned in jyInterp
             jsInterp.dataBusWrite(RobotState); // only pos x, pos y, theta z, vel x, vel y , omega z are rewrote.

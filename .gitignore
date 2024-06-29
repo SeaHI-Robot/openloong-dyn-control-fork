@@ -176,3 +176,7 @@ doc/doxygen/xml/cmake-build-release_2CMakeFiles_2walk__wbc_8dir_2link_8txt.xml
 doc/doxygen/xml/cmake-build-release_2CMakeFiles_2wbc__speed__test_8dir_2link_8txt.xml
 
 .idea/
+
+record/datalog.log
+
+record/matlabReadDataScript.txt
