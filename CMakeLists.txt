@@ -93,3 +93,6 @@ target_link_libraries(wbc_speed_test core mujoco ${sysSimLibs} dl)
 
 add_executable(walk_wbc_joystick demo/walk_wbc_joystick.cpp)
 target_link_libraries(walk_wbc_joystick core mujoco ${sysSimLibs} dl)
+
+add_executable(walk_mpc_wbc_joystick demo/walk_mpc_wbc_joystick.cpp)
+target_link_libraries(walk_mpc_wbc_joystick core mujoco ${sysSimLibs} dl)

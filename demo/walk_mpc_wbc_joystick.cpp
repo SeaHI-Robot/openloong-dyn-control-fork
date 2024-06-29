@@ -181,21 +181,8 @@ int main(int argc, char **argv) {
 				RobotState.js_pos_des(2) = stand_legLength + foot_height; // pos z is not assigned in jyInterp
 				jsInterp.dataBusWrite(RobotState); // only pos x, pos y, theta z, vel x, vel y , omega z are rewrote.
 
-//            // walk speed command generator
-//            if (simTime > startWalkingTime) {
-//                jsInterp.setWzDesLPara(0, 1);
-//                jsInterp.setVxDesLPara(xv_des, 2.0); // jsInterp.setVxDesLPara(0.9,1);
-//            } else
-//                jsInterp.setIniPos(RobotState.q(0), RobotState.q(1),RobotState.base_rpy(2));
-//            jsInterp.step();
-//            RobotState.js_pos_des(2) = stand_legLength + foot_height; // pos z is not assigned in jyInterp
-//            jsInterp.dataBusWrite(RobotState); // only pos x, pos y, theta z, vel x, vel y , omega z are rewrote.
-//
-//			// joint number: arm-l: 0-6, arm-r: 7-13, head: 14, waist: 15-17, leg-l: 18-23, leg-r: 24-29
-//            // switch between walk and stand
-//            if (simTime >= startSteppingTime) {
                 MPC_solv.enable();
-//                RobotState.motionState=DataBus::Walk;
+
                 // gait scheduler
                 gaitScheduler.dataBusRead(RobotState);
                 gaitScheduler.step();
@@ -204,11 +191,6 @@ int main(int argc, char **argv) {
                 footPlacement.dataBusRead(RobotState);
                 footPlacement.getSwingPos();
                 footPlacement.dataBusWrite(RobotState);
-//            }
-//            else if (simTime>= openLoopCtrTime && simTime<startSteppingTime){
-//                RobotState.motionState=DataBus::Stand;
-//            }
-//            else {
 			}
 
 			if (simTime <= openLoopCtrTime || RobotState.motionState==DataBus::Walk2Stand) {
@@ -227,45 +209,13 @@ int main(int argc, char **argv) {
                 MPC_solv.cal();
                 MPC_solv.dataBusWrite(RobotState);
                 MPC_count = 0;
-//				if (RobotState.qpStatus_MPC > 0.5 || RobotState.qpStatus_MPC < -0.5)
-//					printf("qpstatus_MPC = %d , time is %.4f\n", RobotState.qpStatus_MPC, simTime);
             }
-
-//			// WBC input
-//			RobotState.Fr_ff = Eigen::VectorXd::Zero(12);
-//			RobotState.des_ddq = Eigen::VectorXd::Zero(mj_model->nv);
-//			RobotState.des_dq = Eigen::VectorXd::Zero(mj_model->nv);
-//			RobotState.des_delta_q = Eigen::VectorXd::Zero(mj_model->nv);
-//			RobotState.base_rpy_des << 0, 0, jsInterp.thetaZ;
-//			RobotState.base_pos_des= RobotState.js_pos_des;
-//			RobotState.base_pos_des(2) = stand_legLength+foot_height;
-//
-//			RobotState.Fr_ff<<0,0,370,0,0,0,
-//					0,0,370,0,0,0;
-//
-//			// adjust des_delata_q, des_dq and des_ddq to achieve forward walking
-//			if (RobotState.motionState==DataBus::Walk) {
-//				RobotState.des_delta_q.block<2, 1>(0, 0) << jsInterp.vx_W * mj_model->opt.timestep, jsInterp.vy_W * mj_model->opt.timestep;
-//				RobotState.des_delta_q(5) = jsInterp.wz_L * mj_model->opt.timestep;
-//				RobotState.des_dq.block<2, 1>(0, 0) << jsInterp.vx_W, jsInterp.vy_W;
-//				RobotState.des_dq(5) = jsInterp.wz_L;
-//
-//				double k = 5; //5
-//				RobotState.des_ddq.block<2, 1>(0, 0) << k * (jsInterp.vx_W - RobotState.dq(0)), k * (jsInterp.vy_W -
-//																									 RobotState.dq(1));
-//				RobotState.des_ddq(5) = k * (jsInterp.wz_L - RobotState.dq(5));
-//			}
-//			printf("js_vx=%.3f js_vy=%.3f wz_L=%.3f px_w=%.3f py_w=%.3f thetaZ=%.3f\n", jsInterp.vx_W,jsInterp.vy_W,jsInterp.wz_L, jsInterp.px_W, jsInterp.py_W, jsInterp.thetaZ);
-//
-
             // ------------- WBC ------------
             // WBC Calculation
             WBC_solv.dataBusRead(RobotState);
             WBC_solv.computeDdq(kinDynSolver);
             WBC_solv.computeTau();
             WBC_solv.dataBusWrite(RobotState);
-//			if (RobotState.qp_status > 0.5 || RobotState.qp_status < -0.5)
-//				printf("qpstatus = %d , time is %.4f\n", RobotState.qp_status, simTime);
 
             // get the final joint command
             if (simTime <= openLoopCtrTime) {
@@ -311,13 +261,6 @@ int main(int argc, char **argv) {
 
             // give the joint torque command to Webots
             mj_interface.setMotorsTorque(RobotState.motors_tor_out);
-
-            // print info to the console
-//            printf("f_L=[%.3f, %.3f, %.3f]\n", RobotState.fL[0], RobotState.fL[1], RobotState.fL[2]);
-//            printf("f_R=[%.3f, %.3f, %.3f]\n", RobotState.fR[0], RobotState.fR[1], RobotState.fR[2]);
-//
-//            printf("rpyVal=[%.5f, %.5f, %.5f]\n", RobotState.rpy[0], RobotState.rpy[1], RobotState.rpy[2]);
-//            printf("basePos=[%.5f, %.5f, %.5f]\n", RobotState.basePos[0], RobotState.basePos[1], RobotState.basePos[2]);
 
             // data save
             logger.startNewLine();
