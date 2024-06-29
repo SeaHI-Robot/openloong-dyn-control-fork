@@ -14,6 +14,28 @@ Feel free to use in any purpose, and cite OpenLoong-Dynamics-Control in any styl
 class UIctr{
 public:
     GLFWwindow *window;
+    // keyboard
+    struct ButtonState {
+        bool key_w{false};
+        bool key_s{false};
+        bool key_a{false};
+        bool key_d{false};
+        bool key_h{false};
+        bool key_j{false};
+        bool key_space{false};
+    } buttonRead;
+
+    // mouse interaction
+    bool button_left{false};
+    bool button_middle{false};
+    bool button_right{false};
+
+    bool runSim{true};
+    bool isContinuous{true};
+    double lastx{0};
+    double lasty{0};
+    mjModel* mj_model;
+    mjData* mj_data;
 
     UIctr(mjModel *modelIn, mjData *dataIn);
     void iniGLFW();
@@ -29,25 +51,15 @@ public:
     // scroll callback
     void Scroll(double xoffset, double yoffset);
 
+    ButtonState getButtonState();
+
+
+
     void Close();
 
     void enableTracking();
 
-    // keyboard
-    int keyb{0};
-    int motion_state{0};
-    int motion_state_ex{0};
-    // mouse interaction
-    bool button_left{false};
-    bool button_middle{false};
-    bool button_right{false};
 
-    bool runSim{true};
-    bool isContinuous{true};
-    double lastx{0};
-    double lasty{0};
-    mjModel* mj_model;
-    mjData* mj_data;
 private:
     unsigned char* image_rgb_;
     float* image_depth_;
@@ -65,4 +77,5 @@ private:
     mjvScene scn;                       // abstract scene
     mjrContext con;                     // custom GPU context
 };
+
 

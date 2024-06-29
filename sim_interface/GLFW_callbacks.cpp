@@ -102,8 +102,16 @@ void UIctr::createWindow(const char* windowTitle, bool saveVideo) {
 }
 
 void UIctr::updateScene() {
-    if (isContinuous== false)
+    if (!isContinuous)
         runSim= false;
+
+    buttonRead.key_w=false;
+    buttonRead.key_a=false;
+    buttonRead.key_s=false;
+    buttonRead.key_d=false;
+    buttonRead.key_space=false;
+    buttonRead.key_h=false;
+    buttonRead.key_j=false;
 
     // get framebuffer viewport
     mjrRect viewport = {0, 0, 0, 0};
@@ -148,11 +156,6 @@ void UIctr::Keyboard(int key, int scancode, int act, int mods)
         mj_resetData(mj_model, mj_data);
         mj_forward(mj_model, mj_data);
     }
-    if( act==GLFW_PRESS && key==GLFW_KEY_1 )
-    {
-        keyb = 1;
-        motion_state =1;
-    }
 
     if (act==GLFW_RELEASE && key==GLFW_KEY_1)
     {
@@ -166,6 +169,33 @@ void UIctr::Keyboard(int key, int scancode, int act, int mods)
         isContinuous= false;
     }
 
+    if (act==GLFW_RELEASE && key==GLFW_KEY_W){
+        buttonRead.key_w= true;
+    }
+
+    if (act==GLFW_RELEASE && key==GLFW_KEY_A){
+        buttonRead.key_a= true;
+    }
+
+    if (act==GLFW_RELEASE && key==GLFW_KEY_S){
+        buttonRead.key_s= true;
+    }
+
+    if (act==GLFW_RELEASE && key==GLFW_KEY_D){
+        buttonRead.key_d= true;
+    }
+
+    if (act==GLFW_RELEASE && key==GLFW_KEY_H){
+        buttonRead.key_h= true;
+    }
+
+    if (act==GLFW_RELEASE && key==GLFW_KEY_J){
+        buttonRead.key_j= true;
+    }
+
+    if (act==GLFW_RELEASE && key==GLFW_KEY_SPACE){
+        buttonRead.key_space= true;
+    }
 }
 
 // mouse button callback
@@ -236,4 +266,16 @@ void UIctr::Close() {
 
 void UIctr::enableTracking() {
     isTrack=true;
+}
+
+UIctr::ButtonState UIctr::getButtonState() {
+    ButtonState tmp=buttonRead;
+    buttonRead.key_w= false;
+    buttonRead.key_a= false;
+    buttonRead.key_s= false;
+    buttonRead.key_d= false;
+    buttonRead.key_h= false;
+    buttonRead.key_j= false;
+    buttonRead.key_space= false;
+    return tmp;
 }

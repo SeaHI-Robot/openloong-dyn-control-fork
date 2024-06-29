@@ -90,4 +90,3 @@ private:
     pinocchio::Data data_biped, data_biped_fixed;
 
 };
-
