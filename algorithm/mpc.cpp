@@ -2,7 +2,7 @@
 This is part of OpenLoong Dynamics Control, an open project for the control of biped robot,
 Copyright (C) 2024 Humanoid Robot (Shanghai) Co., Ltd, under Apache 2.0.
 Feel free to use in any purpose, and cite OpenLoong-Dynamics-Control in any style, to contribute to the advancement of the community.
- <https://atomgit.com/openloong/openloong-dyn-control.git>
+ <https://gitee.com/panda_23/openloong-dyn-control.git>
  <web@openloong.org.cn>
 */
 #include "mpc.h"
@@ -10,7 +10,7 @@ Feel free to use in any purpose, and cite OpenLoong-Dynamics-Control in any styl
 
 
 MPC::MPC(double dtIn):QP(nu*ch, nc*ch) {
-    m = 76.0843;
+    m = 80.0;
     g = -9.8;
     miu = 0.5;
     delta_foot[0] = 0.073;
@@ -72,20 +72,50 @@ MPC::MPC(double dtIn):QP(nu*ch, nc*ch) {
 }
 
 void MPC::set_weight(double u_weight, Eigen::MatrixXd L_diag, Eigen::MatrixXd K_diag) {
-    Eigen::Matrix<double, 1, nx*mpc_N>   L_diag_N;
-    Eigen::Matrix<double, 1, nu*ch>      K_diag_N;
-    alpha = u_weight;
-    for (int i = 0; i < mpc_N; i++)
-        L_diag_N.block<1,nx>(0, i*nx) = L_diag;
-    for (int i = 0; i < ch; i++)
-        K_diag_N.block<1,nu>(0, i*nu) = K_diag;
+    Eigen::MatrixXd   L_diag_N = Eigen::MatrixXd::Zero(1, nx*mpc_N);
+    Eigen::MatrixXd   K_diag_N = Eigen::MatrixXd::Zero(1, nu*ch);
 
-    L = L_diag_N.asDiagonal();
-    K = K_diag_N.asDiagonal();
+    L = Eigen::MatrixXd::Zero(nx*mpc_N, nx*mpc_N);
+    K = Eigen::MatrixXd::Zero(nu*ch, nu*ch);
+
+    alpha = u_weight;
+    for (int i = 0; i < mpc_N; i++) {
+        L_diag_N.block<1,nx>(0, i*nx) = L_diag;
+    }
+
+    for (int i = 0; i < ch; i++) {
+        K_diag_N.block<1,nu>(0, i*nu) = K_diag;
+    }
+
+    for (int i = 0; i < nx*mpc_N; i++) {
+        L(i,i) = L_diag_N(0,i);
+    }
+
+    for (int i = 0; i < nu*ch; i++) {
+        K(i,i) = K_diag_N(0,i);
+    }
+
+	for (int i = 0; i < mpc_N; i++){
+		L.block<3,3>(i*nx + 3,i*nx + 3) = R_curz[i]*L.block<3,3>(i*nx + 3,i*nx + 3)*R_curz[i].transpose();
+		L.block<3,3>(i*nx + 6,i*nx + 6) = R_curz[i]*L.block<3,3>(i*nx + 6,i*nx + 6)*R_curz[i].transpose();
+		L.block<3,3>(i*nx + 9,i*nx + 9) = R_curz[i]*L.block<3,3>(i*nx + 9,i*nx + 9)*R_curz[i].transpose();
+	}
+
+    for (int i = 0; i < ch; i++){
+        K.block<3,3>(i*nu,i*nu) = R_curz[i]*K.block<3,3>(i*nu,i*nu)*R_curz[i].transpose();
+        K.block<3,3>(i*nu + 3,i*nu + 3) = R_curz[i]*K.block<3,3>(i*nu + 3,i*nu + 3)*R_curz[i].transpose();
+        K.block<3,3>(i*nu + 6,i*nu + 6) = R_curz[i]*K.block<3,3>(i*nu + 6,i*nu + 6)*R_curz[i].transpose();
+        K.block<3,3>(i*nu + 9,i*nu + 9) = R_curz[i]*K.block<3,3>(i*nu + 9,i*nu + 9)*R_curz[i].transpose();
+    }
 }
 
 
 void MPC::dataBusRead(DataBus &Data) {
+    //set value
+    X_cur.block<3,1>(0,0) = Data.base_rpy;
+    X_cur.block<3,1>(3,0) = Data.q.block<3,1>(0,0);
+    X_cur.block<3,1>(6,0) = Data.dq.block<3,1>(3,0);
+    X_cur.block<3,1>(9,0) = Data.dq.block<3,1>(0,0);
     if (EN) {
         //set Xd
         for (int i = 0; i < (mpc_N - 1); i++)
@@ -121,14 +151,10 @@ void MPC::dataBusRead(DataBus &Data) {
         }
     }
 
-    //set value
-    X_cur.block<3,1>(0,0) = Data.base_rpy;
-    X_cur.block<3,1>(3,0) = Data.q.block<3,1>(0,0);
-    X_cur.block<3,1>(6,0) = Data.dq.block<3,1>(3,0);
-    X_cur.block<3,1>(9,0) = Data.dq.block<3,1>(0,0);
-
-    R_cur = Data.base_rot;
-
+    R_cur = eul2Rot(X_cur(0), X_cur(1), X_cur(2));//Data.base_rot;
+    for (int i = 0; i < mpc_N; i++) {
+        R_curz[i] = Rz3(X_cur(2));
+    }
     pCoM = X_cur.block<3,1>(3,0);
     pe.block<3,1>(0,0) = Data.fe_l_pos_W;
     pe.block<3,1>(3,0) = Data.fe_r_pos_W;
@@ -138,7 +164,10 @@ void MPC::dataBusRead(DataBus &Data) {
     pf2comd.block<3,1>(0,0) = pe.block<3,1>(0,0) - Xd.block<3,1>(3,0);
     pf2comd.block<3,1>(3,0) = pe.block<3,1>(3,0) - Xd.block<3,1>(3,0);
 
-    Ic = Data.inertia;
+    // Ic = Data.inertia;
+    Ic <<   12.61,  0, 0.37
+            ,0,  11.15, 0.01
+            ,0.37,0.01, 2.15;
 
     legStateCur = Data.legState;
     legStateNext = Data.legStateNext;
@@ -167,47 +196,33 @@ void MPC::dataBusRead(DataBus &Data) {
 void MPC::cal() {
     if (EN) {
         //qp pre
-        Eigen::Matrix<double, 3, 3> eye3m;
-        Eigen::Matrix<double, 3, 1> zero3v;
-        eye3m << 1.0, 0.0, 0.0,
-                0.0, 1.0, 0.0,
-                0.0, 0.0, 1.0;
-        zero3v.setZero();
-        Eigen::Matrix<double, nx, nx> eye12m;
-        eye12m.setZero();
-        for (int i = 0; i < nx; i++)
-            eye12m(i, i) = 1.0;
+		for (int i = 0; i < mpc_N; i++) {
+			Ac[i].block<3, 3>(0, 6) = R_curz[i].transpose();
+			Ac[i].block<3, 3>(3, 9) = Eigen::MatrixXd::Identity(3,3);
+			A[i] = Eigen::MatrixXd::Identity(nx,nx) + dt * Ac[i];
+		}
+		for (int i = 0; i < mpc_N; i++) {
+			pf2comi[i] = pf2com;
+			Eigen::Matrix3d Ic_W_inv;
+			Ic_W_inv = (R_curz[i] * Ic * R_curz[i].transpose()).inverse();
+			Bc[i].block<3, 3>(6, 0) = Ic_W_inv * CrossProduct_A(pf2comi[i].block<3, 1>(0, 0));
+			Bc[i].block<3, 3>(6, 3) = Ic_W_inv;
+			Bc[i].block<3, 3>(6, 6) = Ic_W_inv * CrossProduct_A(pf2comi[i].block<3, 1>(3, 0));
+			Bc[i].block<3, 3>(6, 9) = Ic_W_inv;
+			Bc[i].block<3, 3>(9, 0) = Eigen::MatrixXd::Identity(3,3)/ m;
+			Bc[i].block<3, 3>(9, 6) = Eigen::MatrixXd::Identity(3,3)/ m;
+			Bc[i]((nx - 1), (nu - 1)) = 1.0 / m;
+			B[i] = dt * Bc[i];
+		}
+		for (int i = 0; i < mpc_N; i++)
+			Aqp.block<nx, nx>(i * nx, 0) = Eigen::MatrixXd::Identity(nx,nx);
+		for (int i = 0; i < mpc_N; i++)
+			for (int j = 0; j < i + 1; j++)
+				Aqp.block<nx, nx>(i * nx, 0) = A[j] * Aqp.block<nx, nx>(i * nx, 0);
 
-        for (int i = 0; i < mpc_N; i++) {
-			R_curz[i] = Rz3(X_cur(2));
-        }
-        for (int i = 0; i < mpc_N; i++) {
-            Ac[i].block<3, 3>(0, 6) = R_curz[i].transpose();
-            Ac[i].block<3, 3>(3, 9) = eye3m;
-            A[i] = eye12m + dt * Ac[i];
-        }
-        for (int i = 0; i < mpc_N; i++) {
-            pf2comi[i] = pf2com;
-			Eigen::Matrix3d 	Ic_W_inv;
-			Ic_W_inv = (R_curz[i]*Ic* R_curz[i].transpose()).inverse();
-            Bc[i].block<3, 3>(6, 0) = Ic_W_inv*CrossProduct_A(pf2comi[i].block<3, 1>(0, 0));
-            Bc[i].block<3, 3>(6, 3) = Ic_W_inv;
-            Bc[i].block<3, 3>(6, 6) = Ic_W_inv*CrossProduct_A(pf2comi[i].block<3, 1>(3, 0));
-            Bc[i].block<3, 3>(6, 9) = Ic_W_inv;
-            Bc[i].block<3, 3>(9, 0) = eye3m / m;
-            Bc[i].block<3, 3>(9, 6) = eye3m / m;
-            Bc[i]((nx - 1), (nu - 1)) = 1.0 / m;
-            B[i] = dt * Bc[i];
-        }
-        for (int i = 0; i < mpc_N; i++)
-            Aqp.block<nx, nx>(i * nx, 0) = eye12m;
-        for (int i = 0; i < mpc_N; i++)
-            for (int j = 0; j < i + 1; j++)
-                Aqp.block<nx, nx>(i * nx, 0) = A[j] * Aqp.block<nx, nx>(i * nx, 0);
-
-        for (int i = 0; i < mpc_N; i++)
-            for (int j = 0; j < i + 1; j++)
-                Aqp1.block<nx, nx>(i * nx, j * nx) = eye12m;
+		for (int i = 0; i < mpc_N; i++)
+			for (int j = 0; j < i + 1; j++)
+				Aqp1.block<nx, nx>(i * nx, j * nx) = Eigen::MatrixXd::Identity(nx,nx);
         for (int i = 1; i < mpc_N; i++)
             for (int j = 0; j < i; j++)
                 for (int k = j + 1; k < (i + 1); k++)
@@ -215,13 +230,13 @@ void MPC::cal() {
 
         for (int i = 0; i < mpc_N; i++)
             Bqp1.block<nx, nu>(i * nx, i * nu) = B[i];
-        Eigen::Matrix<double, nu * mpc_N, nu * ch> Bqp11;
+        Eigen::MatrixXd Bqp11 = Eigen::MatrixXd::Zero(nu * mpc_N, nu * ch);
         Bqp11.setZero();
         Bqp11.block<nu * ch, nu * ch>(0, 0) = Eigen::MatrixXd::Identity(nu * ch, nu * ch);
         for (int i = 0; i < (mpc_N - ch); i++)
             Bqp11.block<nu, nu>(nu * ch + i * nu, nu * (ch - 1)) = Eigen::MatrixXd::Identity(nu, nu);
 
-        Eigen::Matrix<double, nx * mpc_N, nu * ch> B_tmp;
+        Eigen::MatrixXd B_tmp = Eigen::MatrixXd::Zero(nx * mpc_N, nu * ch);
         B_tmp = Bqp1 * Bqp11;
         Bqp = Aqp1 * B_tmp;
 
@@ -338,8 +353,9 @@ void MPC::cal() {
                 }
                 u_low(i * nu + 12) = m * g;
                 u_up(i * nu + 12) = m * g;
-        	} else if (legState[i] == DataBus::LSt) {
+            } else if (legState[i] == DataBus::LSt) {
                 Guess_value(i * nu + 2) = -m * g;
+				Guess_value(i * nu + 8) = 0.0;
                 Guess_value(i * nu + 12) = m * g;
                 for (int j = 0; j < 6; j++) {
                     u_low(i * nu + j) = min[j];
@@ -347,12 +363,11 @@ void MPC::cal() {
                     u_up(i * nu + j) = max[j];
                     u_up(i * nu + j + nu / 2) = 0.0;
                 }
-                u_low(i * nu + 8) = 0.0;
-                u_up(i * nu + 8) = 0.0;
 
                 u_low(i * nu + 12) = m * g;
                 u_up(i * nu + 12) = m * g;
-        	} else if (legState[i] == DataBus::RSt) {
+            } else if (legState[i] == DataBus::RSt) {
+				Guess_value(i * nu + 2) = 0.0;
                 Guess_value(i * nu + 8) = -m * g;
                 Guess_value(i * nu + 12) = m * g;
                 for (int j = 0; j < 6; j++) {
@@ -361,9 +376,6 @@ void MPC::cal() {
                     u_up(i * nu + j) = 0.0;
                     u_up(i * nu + j + nu / 2) = max[j];
                 }
-                u_low(i * nu + 2) = 0.0;
-                u_up(i * nu + 2) = 0.0;
-
                 u_low(i * nu + 12) = m * g;
                 u_up(i * nu + 12) = m * g;
             }
@@ -379,7 +391,7 @@ void MPC::cal() {
         ubA = 1e7 * one_ch_1;
 
         for (int i = 0; i < ch; i++){
-        	if(legState[i] == DataBus::DSt){
+            if(legState[i] == DataBus::DSt){
                 ubA.block<ncfr, 1>(ncfr * i, 0).setZero();
                 ubA.block<ncstxy, 1>(ncfr * ch + ncstxy * i, 0).setZero();
                 ubA.block<ncstz, 1>(ncfr * ch + ncstxy * ch + ncstz * i, 0).setZero();
@@ -397,7 +409,7 @@ void MPC::cal() {
         }
 
         copy_Eigen_to_real_t(qp_H, H, nu * ch, nu * ch);
-        copy_Eigen_to_real_t(qp_c, c, 1, nu * ch);
+        copy_Eigen_to_real_t(qp_c, c, nu * ch, 1);
         copy_Eigen_to_real_t(qp_As, As, nc * ch, nu * ch);
         copy_Eigen_to_real_t(qp_lbA, lbA, nc * ch, 1);
         copy_Eigen_to_real_t(qp_ubA, ubA, nc * ch, 1);
@@ -406,13 +418,18 @@ void MPC::cal() {
         copy_Eigen_to_real_t(xOpt_iniGuess, Guess_value, nu * ch, 1);
         res = QP.init(qp_H, qp_c, qp_As, qp_lu, qp_uu, qp_lbA, qp_ubA, nWSR, &cpu_time, xOpt_iniGuess);
 
-        qpStatus = qpOASES::getSimpleStatus(res);
-        last_nWSR = nWSR;
-        last_cpuTime = cpu_time;
+        qp_Status = qpOASES::getSimpleStatus(res);
+        qp_nWSR = nWSR;
+        qp_cpuTime = cpu_time;
+
+		if (res!=qpOASES::SUCCESSFUL_RETURN)
+		{
+			printf("failed!!!!!!!!!!!!!\n");
+		}
 
         qpOASES::real_t xOpt[nu * ch];
         QP.getPrimalSolution(xOpt);
-        if (qpStatus == 0) {
+        if (qp_Status == 0) {
             for (int i = 0; i < nu * ch; i++)
                 Ufe(i) = xOpt[i];
         }
@@ -443,7 +460,7 @@ void MPC::dataBusWrite(DataBus &Data) {
 
     Data.qp_nWSR_MPC = nWSR;
     Data.qp_cpuTime_MPC = cpu_time;
-    Data.qpStatus_MPC = qpStatus;
+    Data.qpStatus_MPC = qp_Status;
 
     Data.Fr_ff = Ufe.block<12, 1>(0, 0);
 

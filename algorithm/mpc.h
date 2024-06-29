@@ -2,7 +2,7 @@
 This is part of OpenLoong Dynamics Control, an open project for the control of biped robot,
 Copyright (C) 2024 Humanoid Robot (Shanghai) Co., Ltd, under Apache 2.0.
 Feel free to use in any purpose, and cite OpenLoong-Dynamics-Control in any style, to contribute to the advancement of the community.
- <https://atomgit.com/openloong/openloong-dyn-control.git>
+ <https://gitee.com/panda_23/openloong-dyn-control.git>
  <web@openloong.org.cn>
 */
 #pragma once
@@ -104,6 +104,8 @@ private:
     qpOASES::int_t nWSR=100;
     qpOASES::real_t cpu_time=0.1;
     qpOASES::real_t xOpt_iniGuess[nu*ch];
-    double qpStatus, last_nWSR, last_cpuTime;
+
+	double			qp_cpuTime;
+    int 			qp_Status, qp_nWSR;
 };
 
