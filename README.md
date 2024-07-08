@@ -59,7 +59,7 @@ make
 
 ## **代码说明**
 
-​参考本代码API接口[说明文档](https://www.openloong.org.cn/pages/api/html/index.html)及[wiki](https://www.openloong.org.cn/pages/wiki/html/index.html)。
+​参考本代码API接口[说明文档](https://www.openloong.org.cn/pages/api/html/index.html)及[Wiki](https://www.openloong.org.cn/pages/wiki/html/index.html)。
 
 **主要前缀后缀指代说明**
 
