@@ -6,7 +6,7 @@
 
 欢迎访问 🐉 OpenLoong 开源项目代码仓库！
 
-OpenLoong开源项目是由人形机器人（上海）有限公司、上海人形机器人制造业创新中心与开放原子开源基金会（OpenAtom Foundation）共同运营的开源项目。本仓库提供了一套基于 MPC 与 WBC 的仿人机器人控制框架，可部署在 Mujoco 仿真平台上。基于上海人形机器人创新中心“青龙”机器人模型，提供[行走](https://atomgit.com/guoxudong/openloong-dyn-control/blob/master/demo/walk_wbc.cpp)、[跳跃](https://atomgit.com/guoxudong/openloong-dyn-control/blob/master/demo/jump_mpc.cpp)、[盲踩障碍物](https://atomgit.com/guoxudong/openloong-dyn-control/blob/master/demo/walk_mpc_wbc.cpp)三种运动示例。
+OpenLoong开源项目是由人形机器人（上海）有限公司、上海人形机器人制造业创新中心与开放原子开源基金会（OpenAtom Foundation）共同运营的开源项目。本仓库提供了一套基于 MPC 与 WBC 的仿人机器人控制框架，可部署在 Mujoco 仿真平台上。基于上海人形机器人创新中心“青龙”机器人模型，提供[行走](https://atomgit.com/openloong/openloong-dyn-control/blob/master/demo/walk_wbc.cpp)、[跳跃](https://atomgit.com/openloong/openloong-dyn-control/blob/master/demo/jump_mpc.cpp)、[盲踩障碍物](https://atomgit.com/openloong/openloong-dyn-control/blob/master/demo/walk_mpc_wbc.cpp)三种运动示例。
 
 ## 项目特点
 
@@ -59,7 +59,7 @@ make
 
 ## **代码说明**
 
-​参考本代码API接口[说明文档](http://cc.com)。
+​参考本代码API接口[说明文档](https://www.openloong.org.cn/pages/api/html/index.html)及[wiki](https://www.openloong.org.cn/pages/wiki/html/index.html)。
 
 **主要前缀后缀指代说明**
 
