@@ -1,3 +1,6 @@
+build/
+
+record/
 
 cmake-build-debug/
 
