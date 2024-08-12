@@ -75,7 +75,7 @@ void PriorityTasks::computeAll(const Eigen::VectorXd &des_delta_q,const Eigen::V
             taskLib[curId].delta_q=des_delta_q+ pseudoInv_right_weighted(taskLib[curId].Jpre,taskLib[curId].W)*taskLib[curId].errX;
             taskLib[curId].dq=des_dq;
             Eigen::VectorXd ddxcmd= taskLib[curId].ddxDes + taskLib[curId].kp * taskLib[curId].errX+taskLib[curId].kd*taskLib[curId].derrX;
-            taskLib[curId].ddq= des_ddq + dyn_pseudoInv(taskLib[curId].Jpre,dyn_M_inv,true) * (ddxcmd - taskLib[curId].J * dq);
+            taskLib[curId].ddq= des_ddq + dyn_pseudoInv(taskLib[curId].Jpre,dyn_M_inv,true) * (ddxcmd - taskLib[curId].dJ * dq);
 //            std::cout<<taskLib[curId].taskName<<std::endl<<taskLib[curId].delta_q.transpose()<<std::endl;
         }
         else{

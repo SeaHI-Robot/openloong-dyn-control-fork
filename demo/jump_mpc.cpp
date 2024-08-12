@@ -32,6 +32,7 @@ int main(int argc, char **argv) {
     DataBus RobotState(kinDynSolver.model_nv); // data bus
     DataLogger logger("../record/datalog.log"); // data logger
 	int model_nv=kinDynSolver.model_nv;
+	Eigen::Matrix<double, 12, 1> Uje;
 
     // initialize UI: GLFW
     uiController.iniGLFW();
@@ -51,10 +52,11 @@ int main(int argc, char **argv) {
     logger.addIterm("gpsVal", 3);
     logger.addIterm("fe_l_pos_L_des", 3);
     logger.addIterm("fe_r_pos_L_des", 3);
-	logger.addIterm("fe_l_pos_L", 3);
-	logger.addIterm("fe_r_pos_L", 3);
+	logger.addIterm("fe_l_pos_W", 3);
+	logger.addIterm("fe_r_pos_W", 3);
 	logger.addIterm("Ufe", 12);
-    logger.finishItermAdding();
+
+	logger.finishItermAdding();
 
     // ini position and posture for foot-end and hand
     Eigen::Vector3d fe_l_pos_W_des, fe_r_pos_W_des;
@@ -104,10 +106,24 @@ int main(int argc, char **argv) {
             kinDynSolver.computeDyn();
             kinDynSolver.dataBusWrite(RobotState);
 
-            Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> Jac_stand(12, model_nv - 6);
+            Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> Jac_stand(12, 12);
             Jac_stand.setZero();
-			Jac_stand.block(0, 0, 6, model_nv - 6) = RobotState.J_l.block(0, 6, 6, model_nv - 6);
-			Jac_stand.block(6, 0, 6, model_nv - 6) = RobotState.J_r.block(0, 6, 6, model_nv - 6);
+			Jac_stand.block(0, 0, 6, 12) = RobotState.J_l.block(0, model_nv-12, 6, 12);
+			Jac_stand.block(6, 0, 6, 12) = RobotState.J_r.block(0, model_nv-12, 6, 12);
+
+			Eigen::VectorXd torJoint;
+			torJoint = Eigen::VectorXd::Zero(model_nv-6);
+			for (int i = 0; i < model_nv-6; i++)
+			{
+				torJoint[i]=RobotState.motors_tor_cur[i];
+			}
+			Eigen::Vector<double,6> FLest, FRest;
+			Eigen::VectorXd tauAll;
+			tauAll=Eigen::VectorXd::Zero(model_nv);
+			tauAll.block(6,0,model_nv-6,1)=torJoint;
+			FLest = -pseudoInv_SVD(RobotState.J_l * RobotState.dyn_M.inverse() * RobotState.J_l.transpose()) * (RobotState.J_l * RobotState.dyn_M.inverse() * (tauAll - RobotState.dyn_Non) + RobotState.dJ_l * RobotState.dq);
+			FRest = -pseudoInv_SVD(RobotState.J_r * RobotState.dyn_M.inverse() * RobotState.J_r.transpose()) * (RobotState.J_r * RobotState.dyn_M.inverse() * (tauAll - RobotState.dyn_Non) + RobotState.dJ_r * RobotState.dq);
+
 
             // Enter here functions to send actuator commands, like:
             if (simTime <= prepareTime) {
@@ -118,11 +134,9 @@ int main(int argc, char **argv) {
                 RobotState.motors_pos_des = eigen2std(resLeg.jointPosRes + resHand.jointPosRes);
                 RobotState.motors_vel_des.assign(model_nv - 6, 0);
                 RobotState.motors_tor_des.assign(model_nv - 6, 0);
-				fe_l_pos_L_base = fe_l_pos_L_des;
-				fe_r_pos_L_base = fe_r_pos_L_des;
             } else if (simTime < startJumpingTime && simTime > prepareTime) {
-                fe_l_pos_L_des(2) = Ramp(fe_l_pos_L_des(2), stand_z, 0.1 * 0.001); // 0.5
-                fe_r_pos_L_des(2) = Ramp(fe_r_pos_L_des(2), stand_z, 0.1 * 0.001);
+                fe_l_pos_L_des(2) = Ramp(fe_l_pos_L_des(2), stand_z, 0.1 * dt); // 0.5
+                fe_r_pos_L_des(2) = Ramp(fe_r_pos_L_des(2), stand_z, 0.1 * dt);
 
                 auto resLeg = kinDynSolver.computeInK_Leg(fe_l_rot_des, fe_l_pos_L_des, fe_r_rot_des, fe_r_pos_L_des);
                 auto resHand = kinDynSolver.computeInK_Hand(hd_l_rot_des, hd_l_pos_L_des, hd_r_rot_des, hd_r_pos_L_des);
@@ -135,55 +149,60 @@ int main(int argc, char **argv) {
                 RobotState.motors_vel_des.assign(model_nv - 6, 0);
                 RobotState.motors_tor_des.assign(model_nv - 6, 0);
 
-//				RobotState.motors_pos_des[19+4] = RobotState.motors_pos_des[19+4] + 0.01*RobotState.base_rpy(1);
-//				RobotState.motors_pos_des[19+10] = RobotState.motors_pos_des[19+10] + 0.01*RobotState.base_rpy(1);
-
+				for (int j = 0; j < 3; j++)
+					RobotState.js_eul_des(j) = RobotState.base_rpy(j);
+				for (int j = 0; j < 3; j++)
+					RobotState.js_pos_des(j) = RobotState.base_pos(j);
+				for (int j = 0; j < 3; j++)
+					RobotState.js_omega_des(j) = RobotState.base_omega_W(j);
+				for (int j = 0; j < 3; j++)
+					RobotState.js_vel_des(j) = RobotState.dq(j);
 				RobotState.legState = DataBus::DSt;
             } else if (simTime >= startJumpingTime) {
                 double jump_vel_des[3] = {0.0, 0.0, sqrt(2.0 * 9.8 * jump_z)};
-                double jump_acc_t = 2.0 * (0.9 + stand_z) / jump_vel_des[2];//0.2;
-                double jump_eul_des[3] = {0.0, -10.0 / 180.0 * 3.1415926, 0.0};
+                double jump_acc_t = 2.0 * (0.9 + stand_z) / (jump_vel_des[2]);//0.2;
+                double jump_eul_des[3] = {0.0, 0.0 / 180.0 * 3.1415926, 0.0};
 
                 if (jump_state == 0) {// Jump
                     mpc_force.enable();
                     Eigen::Matrix<double, 1, nx> L_diag;
                     Eigen::Matrix<double, 1, nu> K_diag;
                     L_diag <<
-                           1.0, 10.0, 1.0,//eul
-                            10.0, 1.0, 1.0,//pCoM
-                            1e-5, 1e-5, 1e-5,//w
-                            0.1, 0.01, 10.0;//vCoM
+                           50.0, 50.0, 1.0,//eul
+                            50.0, 50.0, 200.0,//pCoM
+                            0.1, 0.1 , 0.1,//w
+                            0.01, 0.1, 20.0;//vCoM
                     K_diag <<
-                           1.0, 1.0, 1.0,//fl
-                            1.0, 1.0, 1.0,
-                            1.0, 1.0, 1.0,//fr
-                            1.0, 1.0, 1.0, 1.0;
-                    mpc_force.set_weight(1e-8, L_diag, K_diag);
-                    RobotState.js_eul_des(1) = Ramp(RobotState.js_eul_des(1), jump_eul_des[1],
-                                                    fabs(jump_eul_des[1] / jump_acc_t * dt));
+                           1.0, 1.0, 0.1,//fl
+                            10.0, 10.0, 10.0,
+                            1.0, 1.0, 0.1,//fr
+                            10.0, 10.0, 10.0, 1.0;
+                    mpc_force.set_weight(1e-6, L_diag, K_diag);
+
+					RobotState.js_eul_des(0) = jump_eul_des[0];
+                    RobotState.js_eul_des(1) = jump_eul_des[1];
+					RobotState.js_eul_des(2) = jump_eul_des[2];
 
                     RobotState.js_vel_des(0) = Ramp(RobotState.js_vel_des(0), jump_vel_des[0],
-                                                    fabs(jump_vel_des[0] / jump_acc_t * dt));
+                                                    fabs(jump_vel_des[0] / (jump_acc_t) * dt));
+					RobotState.js_vel_des(1) = 0.0;
                     RobotState.js_vel_des(2) = Ramp(RobotState.js_vel_des(2), jump_vel_des[2],
                                                     fabs(jump_vel_des[2] / jump_acc_t * dt));
-                    RobotState.js_pos_des(2) = RobotState.js_pos_des(2) + RobotState.dq(2) * dt;//
+
+                    RobotState.js_pos_des(2) = RobotState.js_pos_des(2) + RobotState.js_vel_des(2) * dt;
 
                     fe_l_pos_L_des = RobotState.base_rot * RobotState.fe_l_pos_L;
                     fe_r_pos_L_des = RobotState.base_rot * RobotState.fe_r_pos_L;
 
-                    if (simTime > startJumpingTime + jump_acc_t) {//改条件，腿离地
-//                    if ((RobotState.fL[1] + RobotState.fR[1] > 260.0) || simTime < startJumpingTime + jump_acc_t - 0.1){{
+                    if (simTime > startJumpingTime + jump_acc_t) {
                         jump_state = 3;
+						mpc_force.disable();
                         RobotState.pfeW0.block<3, 1>(0, 0) = fe_l_pos_W_des;
                         RobotState.pfeW0.block<3, 1>(3, 0) = fe_r_pos_W_des;
                     }
                 } else if (jump_state == 3) { //up
                     mpc_force.disable();
-                    fe_l_pos_W_des[0] = Ramp(fe_l_pos_W_des[0], RobotState.pfeW0[0] + 0.05,
-                                             fabs(0.05 / (jump_vel_des[2] / 9.8) * dt));
                     fe_l_pos_W_des[2] = Ramp(fe_l_pos_W_des[2], stand_z, 5.0 * dt);
-                    fe_r_pos_W_des[0] = Ramp(fe_r_pos_W_des[0], RobotState.pfeW0[3] + 0.05,
-                                             fabs(0.05 / (jump_vel_des[2] / 9.8) * dt));
                     fe_r_pos_W_des[2] = Ramp(fe_r_pos_W_des[2], stand_z, 5.0 * dt);
 
                     fe_l_pos_L_des = RobotState.base_rot.inverse() * fe_l_pos_W_des;
@@ -196,8 +215,8 @@ int main(int argc, char **argv) {
 
                     Eigen::Matrix<double, 31, 1> IKRes;
                     IKRes = resLeg.jointPosRes + resHand.jointPosRes;
-                    IKRes(model_nv-6 - 8) = IKRes(model_nv-6 - 8) + RobotState.base_rpy(1) + 1.0 / 180.0 * 3.1415926;
-                    IKRes(model_nv-6 - 2) = IKRes(model_nv-6 - 2) + RobotState.base_rpy(1) + 1.0 / 180.0 * 3.1415926;
+                    IKRes(model_nv-6 - 8) = IKRes(model_nv-6 - 8) + RobotState.base_rpy(1);// + 1.0 / 180.0 * 3.1415926;
+                    IKRes(model_nv-6 - 2) = IKRes(model_nv-6 - 2) + RobotState.base_rpy(1);// + 1.0 / 180.0 * 3.1415926;
 
                     if (RobotState.dq(2) < 0.1) {
                         jump_state = 4;
@@ -212,13 +231,15 @@ int main(int argc, char **argv) {
 
                 } else if (jump_state == 4) { // down
                     mpc_force.disable();
-                    fe_l_pos_W_des[0] = Ramp(fe_l_pos_W_des[0], RobotState.pfeW0[0] + 0.02, fabs(2.0 * dt));
-                    fe_l_pos_W_des[2] = Ramp(fe_l_pos_W_des[2], stand_z, 10.0 * dt);
-                    fe_r_pos_W_des[0] = Ramp(fe_r_pos_W_des[0], RobotState.pfeW0[3] + 0.02, fabs(2.0 * dt));
-                    fe_r_pos_W_des[2] = Ramp(fe_r_pos_W_des[2], stand_z, 10.0 * dt);
+                    fe_l_pos_W_des[0] = Ramp(fe_l_pos_W_des[0], RobotState.pfeW0[0] + 0.2, fabs(10.0 * dt));
+                    fe_r_pos_W_des[0] = Ramp(fe_r_pos_W_des[0], RobotState.pfeW0[3] + 0.2, fabs(10.0 * dt));
 
-                    fe_l_pos_L_des = RobotState.base_rot.inverse() * fe_l_pos_W_des;
-                    fe_r_pos_L_des = RobotState.base_rot.inverse() * fe_r_pos_W_des;
+					Eigen::Vector3d fe_l_pos_L_des_tmp, fe_r_pos_L_des_tmp;
+                    fe_l_pos_L_des_tmp = RobotState.base_rot.inverse() * fe_l_pos_W_des;
+                    fe_r_pos_L_des_tmp = RobotState.base_rot.inverse() * fe_r_pos_W_des;
+
+					fe_l_pos_L_des[0] = fe_l_pos_L_des_tmp[0];
+					fe_r_pos_L_des[0] = fe_r_pos_L_des_tmp[0];
 
                     auto resLeg = kinDynSolver.computeInK_Leg(fe_l_rot_des, fe_l_pos_L_des, fe_r_rot_des,
                                                               fe_r_pos_L_des);
@@ -227,10 +248,10 @@ int main(int argc, char **argv) {
 
                     Eigen::MatrixXd IKRes;
                     IKRes = resLeg.jointPosRes + resHand.jointPosRes;
-                    IKRes(model_nv-6 - 8) = IKRes(model_nv-6 - 8) + RobotState.base_rpy(1) + 1.0 / 180.0 * 3.1415926;
-                    IKRes(model_nv-6 - 2) = IKRes(model_nv-6 - 2) + RobotState.base_rpy(1) + 1.0 / 180.0 * 3.1415926;
+                    IKRes(model_nv-6 - 8) = IKRes(model_nv-6 - 8) + RobotState.base_rpy(1);
+                    IKRes(model_nv-6 - 2) = IKRes(model_nv-6 - 2) + RobotState.base_rpy(1);
 
-                    if (simTime > startJumpingTime + 0.65) {
+					if (FLest(2) > 1000 && FRest(2) > 1000) {
                         jump_state = 5;
                         RobotState.pfeW0.block<3, 1>(0, 0) = RobotState.base_rot * RobotState.fe_l_pos_L;
                         RobotState.pfeW0.block<3, 1>(3, 0) = RobotState.base_rot * RobotState.fe_r_pos_L;
@@ -247,61 +268,55 @@ int main(int argc, char **argv) {
                     mpc_force.enable();
                     Eigen::Matrix<double, 1, nx> L_diag;
                     Eigen::Matrix<double, 1, nu> K_diag;
-                    L_diag <<
-                           2.0, 8.0, 1.0,//eul 1, 100,  1
-                            100.0, 100.0, 200.0,//pCoM
-                            1e-4, 1e-4, 2e-4,//w
-                            0.5, 0.01, 0.3;//vCoM
-                    K_diag <<
-                           1.0, 0.5, 1.0,//fl
-                            1.0, 10.0, 1.0,
-                            1.0, 0.5, 1.0,//fr
-                            1.0, 10.0, 1.0, 1.0;
-                    mpc_force.set_weight(1e-8, L_diag, K_diag);
+
+					L_diag <<2.0, 10.0, 1.0,//eul
+							100.0, 100.0, 200.0,//pCoM
+							1e-4, 1e-4, 1e-4,//w
+							0.5, 0.01, 0.5;//vCoM
+
+					K_diag <<0.1, 0.1, 0.1,//fl
+							0.01, 0.01, 1.0,
+							0.1, 0.1, 0.1,//fr
+							0.01, 0.01, 1.0, 1.0;
+					mpc_force.set_weight(1e-6, L_diag, K_diag);
 
                     double tt = 0.4;
-                    RobotState.js_pos_des(2) = Ramp(RobotState.js_pos_des(2), 1.08, 1 * dt);
+                    RobotState.js_pos_des(2) = Ramp(RobotState.js_pos_des(2), 1.08, 0.1 * dt);
+					RobotState.js_eul_des.setZero();
+					RobotState.js_omega_des.setZero();
+                    RobotState.js_vel_des.setZero();
 
-                    for (int i = 0; i < 3; i++)
-                        RobotState.js_eul_des(i) = Ramp(RobotState.js_eul_des(i), 0.0,
-                                                        fabs(30.0 / 180.0 * 3.1415926 * dt));
-                    for (int i = 0; i < 3; i++)
-                        RobotState.js_omega_des(i) = Ramp(RobotState.js_omega_des(i), 0.0,
-                                                          fabs(50.0 / 180.0 * 3.1415926 * dt));
-                    RobotState.js_vel_des(0) = Ramp(RobotState.js_vel_des(0), 0.0, 10.0 * dt);
-                    RobotState.js_vel_des(1) = Ramp(RobotState.js_vel_des(1), 0.0, 10.0 * dt);
-                    RobotState.js_vel_des(2) = Ramp(RobotState.js_vel_des(2), 0.0, 50.0 * dt);
                     if (count < tt / dt)
                         count = count + 1.0;
-
                 }
             }
+
             // ------------- MPC ------------
             mpc_force.dataBusRead(RobotState);
             mpc_force.cal();
             mpc_force.dataBusWrite(RobotState);
-            Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> Uje(model_nv-6, 1);
-            Uje.setZero();
             if (mpc_force.get_ENA()) {
-                Uje = Jac_stand.transpose() * (-1.0) * RobotState.fe_react_tau_cmd.block<nu - 1, 1>(nu * 0, 0);
-                double jTor_max[6] = {400.0, 100.0, 400.0, 400.0, 80.0, 10.0};
-                double jTor_min[6] = {-400.0, -100.0, -400.0, -400.0, -80.0, -10.0};
-                for (int i = 0; i < 6; i++) {
-                    Limit(Uje(i + model_nv-6-12), jTor_max[i], jTor_min[i]);
-                    Limit(Uje(i + model_nv-6-12 + 6), jTor_max[i], jTor_min[i]);
+				Uje.setZero();
+                Uje = Jac_stand.transpose() * (-1.0) * RobotState.fe_react_tau_cmd.block<nu - 1, 1>(0, 0);
+                double jTor_max[6] = {400.0, 100.0, 400.0, 400.0, 80.0, 20.0};
+                double jTor_min[6] = {-400.0, -100.0, -400.0, -400.0, -80.0, -20.0};
+
+				for (int i = 0; i < 6; i++) {
+                    Limit(Uje(i), jTor_max[i], jTor_min[i]);
+                    Limit(Uje(i + 6), jTor_max[i], jTor_min[i]);
                 }
+
                 for (int i = 0; i < 12; i++) {
-                    pvtCtr.disablePV(i + model_nv-6-12);
-                    RobotState.motors_tor_des[i + model_nv-6-12] = Uje(i + model_nv-6-12);
+                    pvtCtr.disablePV(model_nv-6-12 + i);
+                    RobotState.motors_tor_des[model_nv-6-12 + i] = Uje(i);
                 }
             }
+			else{
+				RobotState.fe_react_tau_cmd.setZero();
+			}
 
             // joint PVT controller
             pvtCtr.dataBusRead(RobotState);
-            pvtCtr.setJointPD(1500.0,50,"J_hip_l_pitch");
-			pvtCtr.setJointPD(2000.0,80,"J_ankle_l_pitch");
-            pvtCtr.setJointPD(1500.0,50,"J_hip_r_pitch");
-			pvtCtr.setJointPD(2000.0,80,"J_ankle_r_pitch");
             if (simTime <= startJumpingTime) {
                 pvtCtr.calMotorsPVT(110.0 / 1000.0 / 180.0 * 3.1415);
             } else {
@@ -323,8 +338,8 @@ int main(int argc, char **argv) {
             logger.recItermData("gpsVal", RobotState.base_pos);
             logger.recItermData("fe_l_pos_L_des", fe_l_pos_L_des);
             logger.recItermData("fe_r_pos_L_des", fe_r_pos_L_des);
-			logger.recItermData("fe_l_pos_L", RobotState.fe_l_pos_W);
-			logger.recItermData("fe_r_pos_L", RobotState.fe_r_pos_W);
+			logger.recItermData("fe_l_pos_W", RobotState.fe_l_pos_W);
+			logger.recItermData("fe_r_pos_W", RobotState.fe_r_pos_W);
 			logger.recItermData("Ufe", RobotState.fe_react_tau_cmd.block<nu - 1, 1>(nu * 0, 0));
             logger.finishLine();
         };

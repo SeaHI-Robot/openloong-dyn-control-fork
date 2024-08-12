@@ -71,7 +71,7 @@ private:
     Eigen::Matrix<double,nu*ch, nu*ch>            K, M;
     double alpha;
     Eigen::Matrix<double,nu*ch, nu*ch>          H;
-    Eigen::Matrix<double,1, nu*ch>              c;
+    Eigen::Matrix<double,nu * ch, 1>              c;
 
     Eigen::Matrix<double,nu*ch,1>               u_low, u_up;
     Eigen::Matrix<double,nc*ch, nu*ch>          As;

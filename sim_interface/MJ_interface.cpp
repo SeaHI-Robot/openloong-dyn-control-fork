@@ -47,6 +47,7 @@ MJ_Interface::MJ_Interface(mjModel *mj_modelIn, mjData *mj_dataIn) {
     velSensorId= mj_name2id(mj_model,mjOBJ_SENSOR,velSensorName.c_str());
     gyroSensorId= mj_name2id(mj_model,mjOBJ_SENSOR,gyroSensorName.c_str());
     accSensorId= mj_name2id(mj_model,mjOBJ_SENSOR,accSensorName.c_str());
+
 }
 
 void MJ_Interface::updateSensorValues() {
@@ -56,7 +57,7 @@ void MJ_Interface::updateSensorValues() {
         motor_vel[i]=mj_data->qvel[jntId_qvel[i]];
     }
     for (int i=0;i<4;i++)
-        baseQuat[i]=mj_data->sensordata[orientataionSensorId+i];
+        baseQuat[i]=mj_data->sensordata[mj_model->sensor_adr[orientataionSensorId]+i];
     double tmp=baseQuat[0];
     baseQuat[0]=baseQuat[1];
     baseQuat[1]=baseQuat[2];
@@ -71,10 +72,11 @@ void MJ_Interface::updateSensorValues() {
     {
         double posOld=basePos[i];
         basePos[i]=mj_data->xpos[3*baseBodyId+i];
-        baseAcc[i]=mj_data->sensordata[accSensorId+i];
-        baseAngVel[i]=mj_data->sensordata[gyroSensorId+i];
+        baseAcc[i]=mj_data->sensordata[mj_model->sensor_adr[accSensorId]+i];
+        baseAngVel[i]=mj_data->sensordata[mj_model->sensor_adr[gyroSensorId]+i];
         baseLinVel[i]=(basePos[i]-posOld)/(mj_model->opt.timestep);
     }
+
 }
 
 void MJ_Interface::setMotorsTorque(std::vector<double> &tauIn) {

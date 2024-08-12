@@ -1,4 +1,4 @@
-![](./assets/logo.png)
+<img src="./assets/logo.png" style="zoom:50%;" />
 
 # OpenLoong Dynamics Control
 
@@ -21,11 +21,11 @@ OpenLoong开源项目是由人形机器人（上海）有限公司、上海人�
 **环境建议**
 
 - 操作系统：Ubuntu 22.04.4 LTS
-- 编译器：GCC 11.4.0
+- 编译器：g++ 11.4.0
 
 **依赖安装**
 
-​本仓库为基于 mujoco 针对“青龙”人形机器人进行制仿真测试， mujoco 的仿真引擎、pinocchio 动力学库、eigen、quill 记录工具、GLFW 图形库、jsoncpp 解析库等也包含到了仓库之中，但仿真界面需系统支持 openGL，需安装
+本仓库为基于 mujoco 针对“青龙”人形机器人进行制仿真测试， mujoco 的仿真引擎、pinocchio 动力学库、eigen、quill 记录工具、GLFW 图形库、jsoncpp 解析库等也包含到了仓库之中，但仿真界面需系统支持 openGL，需安装
 
 ```Bash
 # Update & Install Dependencies
@@ -55,11 +55,11 @@ make
 
 **仿真效果**
 
-![demo](assets/demo.png)
+<img src="assets/demo.png" alt="demo" style="zoom:50%;" />
 
 ## **代码说明**
 
-​参考本代码API接口[说明文档](https://www.openloong.org.cn/pages/api/html/index.html)及[Wiki](https://www.openloong.org.cn/pages/wiki/html/index.html)。
+参考本代码API接口[说明文档](https://www.openloong.org.cn/pages/api/html/index.html)及[Wiki](https://www.openloong.org.cn/pages/wiki/html/index.html)。
 
 **主要前缀后缀指代说明**
 
@@ -194,7 +194,7 @@ DataBus::LegState legState=DataBus::RS;                //初始腾空腿
 
 其中，*sensor*安装在上述定义的*site*处，*site*并不参与碰撞以及物体质量和惯性的计算，无需担心附加的site会对仿真产生不利的影响。
 
-​ b. **关于模型的修改及替换**
+ b. **关于模型的修改及替换**
 
 以此项目的青龙机器人“AzureDragon为“例：*base_link*下并联了头*Link_head_*、腰*Link_waist_*、左臂*Link**arm_l*、右臂*Link**arm_r_等四个串联分支。其中左臂、右臂分支依次串联了7个自由度，头部分支串联了2个自由度。腰分支串联了俯仰*Link_waist_pitch*、滚转*Link_waist_roll*、偏航*Link_waist_yaw*等3个自由度后，并联了左腿、右腿两个分支，每条腿上依次串联了三个髋关节*Link**hip_、一个膝关节*Link_knee_*、两个踝关节*Link_ankle_*等6个自由度。至此，完成了31个自由度的配置。
 
@@ -273,6 +273,8 @@ mjData* mj_data = mj_makeData(mj_model);
 
 [3] Di Carlo J, Wensing P M, Katz B, et al. Dynamic locomotion in the mit  cheetah 3 through convex model-predictive control[C]//2018 IEEE/RSJ  international conference on intelligent robots and systems (IROS). IEEE, 2018: 1-9.
 
+[4] 卞泽坤, 王兴兴. 四足机器人控制算法: 建模、控制与实践[M]. 机械工业出版社, 2023
+
 ## 引用格式
 
 若应用本开源项目中的代码，请以以下格式进行引用：
@@ -293,3 +295,16 @@ mjData* mj_data = mj_makeData(mj_model);
 [💬 新建讨论](https://atomgit.com/openloong/openloong-dyn-control/discussions/new/choose) | [📝 反馈问题](https://atomgit.com/openloong/openloong-dyn-control/issues/create) | [📨 变更请求](https://atomgit.com/openloong/openloong-dyn-control/changes)
 
 您可以对现有内容进行意见评价、问题反馈、贡献您的原创内容等，对本代码的任何问题及意见，请联系<web@openloong.org.cn>
+
+## 更新日志
+
+2024.06.29
+
+1. 增加walk_wbc_joystick与 walk_mpc_wbc_joystick两个demo，可利用键盘控制机器人运动，并能实现转弯。
+
+2024.08.12
+
+1. 修改由mujoco中提取传感器数据的ID错误，感谢驯龙软件对该问题的提出；
+2. 修改MPC中c矩阵定义的维数错误，感谢@geekloong、@yichuanku对该问题的提出；
+3. 修改WBC优先级计算中，第一个优先级的计算错误，感谢@1190201119对该问题的提出；
+4. 修改MPC的代价函数。

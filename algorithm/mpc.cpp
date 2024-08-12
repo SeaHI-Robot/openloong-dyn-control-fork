@@ -10,7 +10,7 @@ Feel free to use in any purpose, and cite OpenLoong-Dynamics-Control in any styl
 
 
 MPC::MPC(double dtIn):QP(nu*ch, nc*ch) {
-    m = 80.0;
+    m = 77.35;
     g = -9.8;
     miu = 0.5;
     delta_foot[0] = 0.073;
@@ -19,10 +19,10 @@ MPC::MPC(double dtIn):QP(nu*ch, nc*ch) {
     delta_foot[3] = 0.025;
 
     max[0] = 1000.0;  max[1] = 1000.0; max[2] = -3.0*m*g;
-    max[3] = 1000.0;  max[4] = 1000.0; max[5] = 1000.0;
+    max[3] = 20.0;  max[4] = 80.0; max[5] = 100.0;
 
     min[0] = -1000.0;  min[1] = -1000.0; min[2] = 0.0;
-    min[3] = -1000.0;  min[4] = -1000.0; min[5] = -1000.0;
+    min[3] = -20.0;  min[4] = -80.0; min[5] = -100.0;
 
     //single rigid body model
     for (int i = 0; i < (mpc_N); i ++){
@@ -130,27 +130,26 @@ void MPC::dataBusRead(DataBus &Data) {
             Xd(nx * (mpc_N - 1) + 9 + j) = Data.js_vel_des(j);
     }
     else{
-        for (int j = 0; j < 3; j++)
-            Data.js_eul_des(j) = Data.base_rpy(j);
-        for (int j = 0; j < 3; j++)
-            Data.js_pos_des(j) = Data.base_pos(j);
-        for (int j = 0; j < 3; j++)
-            Data.js_omega_des(j) = Data.base_omega_W(j);
-        for (int j = 0; j < 3; j++)
-            Data.js_vel_des(j) = Data.dq(j);
-
         for (int i = 0; i < mpc_N; i++){
             for (int j = 0; j < 3; j++)
-                Xd(nx * i + j) = Data.js_eul_des(j);
+                Xd(nx * i + j) = X_cur(j);//Data.js_eul_des(j);
             for (int j = 0; j < 3; j++)
-                Xd(nx * i + 3 + j) = Data.js_pos_des(j);
+                Xd(nx * i + 3 + j) = X_cur(3 + j);//Data.js_pos_des(j);
             for (int j = 0; j < 3; j++)
-                Xd(nx * i + 6 + j) = Data.js_omega_des(j);
+                Xd(nx * i + 6 + j) = X_cur(6 + j);//Data.js_omega_des(j);
             for (int j = 0; j < 3; j++)
-                Xd(nx * i + 9 + j) = Data.js_vel_des(j);
+                Xd(nx * i + 9 + j) = X_cur(9 + j);//Data.js_vel_des(j);
         }
+//		for (int j = 0; j < 3; j++)
+//			Data.js_eul_des(j) = X_cur(j);//
+//		for (int j = 0; j < 3; j++)
+//			Data.js_pos_des(j) = X_cur(3 + j);//
+//		for (int j = 0; j < 3; j++)
+//			Data.js_omega_des(j) = X_cur(6 + j);//;
+//		for (int j = 0; j < 3; j++)
+//			Data.js_vel_des(j) = X_cur(9 + j);//;
     }
-
+	
     R_cur = eul2Rot(X_cur(0), X_cur(1), X_cur(2));//Data.base_rot;
     for (int i = 0; i < mpc_N; i++) {
         R_curz[i] = Rz3(X_cur(2));
@@ -240,8 +239,21 @@ void MPC::cal() {
         B_tmp = Bqp1 * Bqp11;
         Bqp = Aqp1 * B_tmp;
 
-        H = 2 * (Bqp.transpose() * L * Bqp + alpha * K);
-        c = 2 * Bqp.transpose() * L * (Aqp * X_cur - Xd);
+		Eigen::Matrix<double, nu*ch, 1>		delta_U;
+		delta_U.setZero();
+		for (int i = 0; i < ch; i++){
+			if (legState[i] == DataBus::LSt)
+				delta_U(nu*i + 2) = m*g;
+			else if (legState[i] == DataBus::RSt)
+				delta_U(nu*i + 8) = m*g;
+			else{
+				delta_U(nu*i + 2) = 0.5*m*g;
+				delta_U(nu*i + 8) = 0.5*m*g;
+			}
+		}
+
+		H = 2 * (Bqp.transpose() * L * Bqp + alpha * K) + 1e-10*Eigen::MatrixXd::Identity(nx*mpc_N, nx*mpc_N);
+		c = 2 * Bqp.transpose() * L * (Aqp * X_cur - Xd) + 2 * alpha * K * delta_U;
 
         //friction constraint
         Eigen::Matrix<double, ncfr_single, 3> Asfr111, Asfr11;
@@ -424,7 +436,7 @@ void MPC::cal() {
 
 		if (res!=qpOASES::SUCCESSFUL_RETURN)
 		{
-			printf("failed!!!!!!!!!!!!!\n");
+//			printf("failed!!!!!!!!!!!!!\n");
 		}
 
         qpOASES::real_t xOpt[nu * ch];
