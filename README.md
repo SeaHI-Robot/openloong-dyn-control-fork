@@ -16,7 +16,7 @@ OpenLoong开源项目是由人形机器人（上海）有限公司、上海人�
 
 - **易理解** 代码结构简洁，遵循针对功能进行模块封装的代码设计原则，应用总线进行模块间数据交互，减少封装冗余，有助于降低代码复杂度；算法实现采用“读取-计算-写入”的简单逻辑，提高代码的可理解性。
 
-  <center><img src="assets/行走.gif" alt="行走" style="zoom:50%;" /><img src="assets/踩障碍.gif" alt="踩障碍" style="zoom:50%;" /></center>
+  <center><img src="./assets/行走.gif" alt="行走" style="zoom:50%;" /><img src="./assets/踩障碍.gif" alt="踩障碍" style="zoom:50%;" /></center>
 
 ## 更新日志
 
@@ -75,7 +75,7 @@ make
 
 **仿真效果**
 
-<img src="assets/demo.png" alt="demo" style="zoom:50%;" />
+<img src="./assets/demo.png" alt="demo" style="zoom:50%;" />
 
 ## **代码说明**
 
