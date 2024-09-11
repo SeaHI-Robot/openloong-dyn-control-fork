@@ -1,4 +1,4 @@
-<img src="./assets/logo.png" style="zoom:50%;" />
+<img src="./assets/logo.png" style="zoom:30%;" />
 
 # OpenLoong Dynamics Control
 
@@ -6,7 +6,7 @@
 
 欢迎访问 🐉 OpenLoong 开源项目代码仓库！
 
-OpenLoong开源项目是由人形机器人（上海）有限公司、上海人形机器人制造业创新中心与开放原子开源基金会（OpenAtom Foundation）共同运营的开源项目。本仓库提供了一套基于 MPC 与 WBC 的仿人机器人控制框架，可部署在 Mujoco 仿真平台上。基于上海人形机器人创新中心“青龙”机器人模型，提供[行走](https://atomgit.com/openloong/openloong-dyn-control/blob/master/demo/walk_wbc.cpp)、[跳跃](https://atomgit.com/openloong/openloong-dyn-control/blob/master/demo/jump_mpc.cpp)、[盲踩障碍物](https://atomgit.com/openloong/openloong-dyn-control/blob/master/demo/walk_mpc_wbc.cpp)三种运动示例。
+OpenLoong开源项目是由人形机器人（上海）有限公司、上海人形机器人制造业创新中心与开放原子开源基金会（OpenAtom Foundation）共同运营的开源项目。本仓库提供了一套基于 MPC 与 WBC 的仿人机器人控制框架，可部署在 Mujoco 仿真平台上。基于上海人形机器人创新中心“青龙”机器人模型，提供[行走](https://atomgit.com/openloong/openloong-dyn-control/blob/master/demo/walk_wbc.cpp)、[跳跃](https://atomgit.com/openloong/openloong-dyn-control/blob/master/demo/jump_mpc.cpp)、[盲踩障碍物](https://atomgit.com/openloong/openloong-dyn-control/blob/master/demo/walk_mpc_wbc.cpp)三种运动示例，在实物样机上实现了机器人的<b>行走</b>、<b>盲踩障碍</b>两种运动。
 
 ## 项目特点
 
@@ -15,6 +15,26 @@ OpenLoong开源项目是由人形机器人（上海）有限公司、上海人�
 - **可扩展** 控制框架结构采用分层模块化设计，旨在提高系统的可维护性和可扩展性，系统各功能模块在逻辑和功能上具有明确的界限，为二次开发提供了更加友好的环境，使开发人员能够更轻松地对系统进行功能定制和扩展。
 
 - **易理解** 代码结构简洁，遵循针对功能进行模块封装的代码设计原则，应用总线进行模块间数据交互，减少封装冗余，有助于降低代码复杂度；算法实现采用“读取-计算-写入”的简单逻辑，提高代码的可理解性。
+
+  <center><img src="assets/行走.gif" alt="行走" style="zoom:50%;" /><img src="assets/踩障碍.gif" alt="踩障碍" style="zoom:50%;" /></center>
+
+## 更新日志
+
+2024.06.29
+
+1. 增加walk_wbc_joystick与 walk_mpc_wbc_joystick两个demo，可利用键盘控制机器人运动，并能实现转弯。
+
+2024.08.12
+
+1. 修改由mujoco中提取传感器数据的ID错误，感谢驯龙软件对该问题的提出；
+2. 修改MPC中c矩阵定义的维数错误，感谢@geekloong、@yichuanku对该问题的提出；
+3. 修改WBC优先级计算中，第一个优先级的计算错误，感谢@1190201119对该问题的提出；
+4. 修改MPC的代价函数。
+
+2024.09.11
+
+1. 增加低阻尼模型分支“low_damping_model”，该模型与实物样机的关节响应基本一致，提供walk_wbc_joystick与 walk_mpc_wbc_joystick两个demo；
+2. 增加**更换模型**说明文档[Tutorial](https://atomgit.com/openloong/openloong-dyn-control/blob/master/Tutorial.md)。
 
 ## 环境安装
 
@@ -161,109 +181,7 @@ DataBus::LegState legState=DataBus::RS;                //初始腾空腿
 
 **模型替换说明**
 
-1. 模型文件
-
-   a. **xml类型模型文件导出**
-
-准备机器人的URDF文件和mesh文件(STL格式)，添加用于mujoco编译的标签：
-
-```XML
-<mujoco>
-<compiler
-        meshdir="meshes/"
-        balanceinertia="true"
-        discardvisual="false" />
-</mujoco>
-```
-
-切换到mujoco-3.x.x/bin目录，运行指令
-
-```Bash
-./simulate
-```
-
-将urdf文件拖拽进simulate预览界面中，保存xml，注意，mesh文件目录需要对应。
-
-可参考Mojoco官方[文档](https://mujoco.readthedocs.io/en/stable/XMLreference.html)，设置*compiler*,*option*等标签，定义*asset*标签将STL文件导入，定义(whold)body, *actuator, sensor*等：
-
-| 父标签      | 子标签                                                       |
-| ----------- | ------------------------------------------------------------ |
-| *worldbody* | 定义灯光，相机，地板，机器人(*inertial*、*joint*、*freejoint*、*geom*、*site*、*camera*、*light*)等 |
-| *actuator*  | 定义执行器motor、position、velocity等                        |
-| *sensor*    | 定义需要的传感器，可添加传感器噪声                           |
-
-其中，*sensor*安装在上述定义的*site*处，*site*并不参与碰撞以及物体质量和惯性的计算，无需担心附加的site会对仿真产生不利的影响。
-
- b. **关于模型的修改及替换**
-
-以此项目的青龙机器人“AzureDragon为“例：*base_link*下并联了头*Link_head_*、腰*Link_waist_*、左臂*Link**arm_l*、右臂*Link**arm_r_等四个串联分支。其中左臂、右臂分支依次串联了7个自由度，头部分支串联了2个自由度。腰分支串联了俯仰*Link_waist_pitch*、滚转*Link_waist_roll*、偏航*Link_waist_yaw*等3个自由度后，并联了左腿、右腿两个分支，每条腿上依次串联了三个髋关节*Link**hip_、一个膝关节*Link_knee_*、两个踝关节*Link_ankle_*等6个自由度。至此，完成了31个自由度的配置。
-
-可参考该串联系统，修改其中某些自由度的配置：
-
-```XML
-<worldbody>
-    <body name="base_link" pos="x x x">
-        <freejoint name="float_base" />
-        <body name="body1" pos="x x x">
-            <inertial pos="x x x" quat="x x x" mass="x" diaginertia="x x x"/>
-            <joint name="joint1" pos="0 0 0" axis="1 0 0" limited="true" range="x x"/>
-            <geom type="mesh" contype="0" conaffinity="0" group="1" density="0" rgba="x x x 1" mesh="body1"/>
-            <geom type="mesh" rgba="x x x 1" mesh="body1"/>
-            <body name="body2" pos="x x x">
-                ...
-                <joint name="joint2" .../>
-                ...
-            </body>
-        </body>
-        <body name="body3" pos="x x x">
-            ...
-            <joint name="joint3" .../>
-            ...
-        </body>
-    </body>
-</worldbody>
-```
-
-其中，*base_link*下并联了两个分支，其中一条分支由*body1*和*body2*串联而成，另外一条分支由*body3*构成。如果机器人为浮动基座，可以在上述名为*base_link*的*body*下添加自由关节*freejoint* 。如果机器人是固定基座，去掉*freejoint* 。可以根据需要，在模型配置阶段，选择将*freejoint* 屏蔽掉。
-
-本项目为31个关节中的每一个都设置了motor类型的执行器。
-
-```XML
-<actuator>
-    <motor name="motor1"  joint="joint1" gear="x" ctrllimited="true" ctrlrange="x x"/>
-    ...
-</actuator>
-```
-
-用户可以根据机器人的自由度的情况，在主动关节处定义相应执行器。
-
-本项目配置了四元数*framequat*、速度计*velocimeter*、角速度计*gyro*、加速度计*accelerometer*等传感器，安装在*body*标签中已定义好的*site*处，可根据需要，添加 *touch*、*force*、*torque*、*jointpos*、*jointvel*、*actuatorfrc*等传感器。
-
-```XML
-<sensor>
-    <framequat name="xx" objtype="site" objname="imu" />
-    <velocimeter name="xx" site="imu" />
-    <gyro name="xx" site="imu" />
-    <accelerometer name="xx" site="imu" />
-</sensor>
-```
-
-除自由度配置、执行器配置、传感器配置，其他更具体的参数修改可参考Mojoco官方[文档](https://mujoco.readthedocs.io/en/stable/XMLreference.html)。
-
-2. **控制代码与Mujoco接口**
-
-可参考[文档](https://mujoco.readthedocs.io/en/stable/APIreference/index.html)中关于`mjModel`、`mjData`、`mjOption`等结构类型的定义，使用`mj_loadXML`、`mj_makeData`函数得到`mjModel`、`mjData`。
-
-```C++
-mjModel* mj_model = mj_loadXML("../Models/xxx.xml", 0, error, 1000);
-mjData* mj_data = mj_makeData(mj_model);
-```
-
-其中`mj_model->nv`为广义坐标速度维度，为浮动基的线速度、角速度以及31个旋转类型关节的速度，本项目程序框架中与自由度相关变量均与`mj_model->nv-6`相对应，动力学库会根据URDF自动获取机器人自由度维数，与自由度相关变量的维数均据此定义，无需用户自己更改。
-
-由于本项目的*body*、*joint*、*motor*等组件地址的访问方式为，依靠查询名称字符串并锁定地址，当某一组件修改时不会影响其他*body*、*joint*的数据读取及指令下发，相比直接索引编号，为修改模型提供了便利。修改模型中的某一自由度的控制参数时，只需要修改*MJ_Interface.h*的`JointName`、*Pin_KinDyn.h*的`motorName`、*PVT_Ctr.h*的`motorName`、*JointCtrConfig.json*等文件某一自由度名称对应的变量即可，例如修改`J_waist_pitch`的刚度，需修改*JointCtrConfig.json*中`J_waist_pitch`与对应的PD参数，`J_waist_pitch`名称与xml文件中的*joint name*、*motor name*相对应。
-
-传感器数据地址的访问方式亦是通过查询名称字符串锁定地址，添加或者删除传感器只需修改*MJ_Interface.h*中对应的传感器名称即可。
+模型更换可参考[Tutorial](https://atomgit.com/openloong/openloong-dyn-control/blob/master/Tutorial.md)文档。
 
 ## 参考文献
 
@@ -295,16 +213,3 @@ mjData* mj_data = mj_makeData(mj_model);
 [💬 新建讨论](https://atomgit.com/openloong/openloong-dyn-control/discussions/new/choose) | [📝 反馈问题](https://atomgit.com/openloong/openloong-dyn-control/issues/create) | [📨 变更请求](https://atomgit.com/openloong/openloong-dyn-control/changes)
 
 您可以对现有内容进行意见评价、问题反馈、贡献您的原创内容等，对本代码的任何问题及意见，请联系<web@openloong.org.cn>
-
-## 更新日志
-
-2024.06.29
-
-1. 增加walk_wbc_joystick与 walk_mpc_wbc_joystick两个demo，可利用键盘控制机器人运动，并能实现转弯。
-
-2024.08.12
-
-1. 修改由mujoco中提取传感器数据的ID错误，感谢驯龙软件对该问题的提出；
-2. 修改MPC中c矩阵定义的维数错误，感谢@geekloong、@yichuanku对该问题的提出；
-3. 修改WBC优先级计算中，第一个优先级的计算错误，感谢@1190201119对该问题的提出；
-4. 修改MPC的代价函数。
