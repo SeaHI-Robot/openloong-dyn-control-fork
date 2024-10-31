@@ -57,10 +57,10 @@ int main(int argc, const char** argv)
     Eigen::Matrix3d fe_l_rot_des= eul2Rot(fe_l_eul_L_des(0),fe_l_eul_L_des(1),fe_l_eul_L_des(2));
     Eigen::Matrix3d fe_r_rot_des= eul2Rot(fe_r_eul_L_des(0),fe_r_eul_L_des(1),fe_r_eul_L_des(2));
 
-    Eigen::Vector3d hd_l_pos_L_des={-0.019, 0.32, -0.159};
-    Eigen::Vector3d hd_r_pos_L_des={-0.019, -0.32, -0.159};
-    Eigen::Vector3d hd_l_eul_L_des={-1.7581, 0.2129, 2.9581};
-    Eigen::Vector3d hd_r_eul_L_des={1.7581, 0.21291, -2.9581};
+    Eigen::Vector3d hd_l_pos_L_des={-0.02, 0.32, -0.159};
+    Eigen::Vector3d hd_r_pos_L_des={-0.02, -0.32, -0.159};
+    Eigen::Vector3d hd_l_eul_L_des={-1.253, 0.122, -1.732};
+    Eigen::Vector3d hd_r_eul_L_des={1.253, 0.122, 1.732};
     Eigen::Matrix3d hd_l_rot_des= eul2Rot(hd_l_eul_L_des(0),hd_l_eul_L_des(1),hd_l_eul_L_des(2));
     Eigen::Matrix3d hd_r_rot_des= eul2Rot(hd_r_eul_L_des(0),hd_r_eul_L_des(1),hd_r_eul_L_des(2));
 
@@ -114,10 +114,10 @@ int main(int argc, const char** argv)
             fe_l_rot_des= eul2Rot(fe_l_eul_L_des(0),fe_l_eul_L_des(1),fe_l_eul_L_des(2));  // roll, pitch, yaw
             fe_r_rot_des= eul2Rot(fe_r_eul_L_des(0),fe_r_eul_L_des(1),fe_r_eul_L_des(2));
 
-            hd_l_pos_L_des<<-0.02, 0.32, -0.159;
-            hd_r_pos_L_des<<-0.02, -0.32, -0.159;
-            hd_l_eul_L_des<<-1.7581, 0.2129, 2.9581;
-            hd_r_eul_L_des<<1.7581, 0.21291, -2.9581;
+            hd_l_pos_L_des={-0.02, 0.32, -0.159};
+            hd_r_pos_L_des={-0.02, -0.32, -0.159};
+            hd_l_eul_L_des={-1.253, 0.122, -1.732};
+            hd_r_eul_L_des={1.253, 0.122, 1.732};
             hd_l_rot_des= eul2Rot(hd_l_eul_L_des(0),hd_l_eul_L_des(1),hd_l_eul_L_des(2));
             hd_r_rot_des= eul2Rot(hd_r_eul_L_des(0),hd_r_eul_L_des(1),hd_r_eul_L_des(2));
 
