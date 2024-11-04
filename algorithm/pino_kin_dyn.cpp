@@ -407,12 +407,11 @@ Pin_KinDyn::computeInK_Hand(const Eigen::Matrix3d &Rdes_L, const Eigen::Vector3d
     const pinocchio::SE3 oMdesR(Rdes_R, Pdes_R);
     Eigen::VectorXd qIk=Eigen::VectorXd::Zero(model_biped_fixed.nv); // initial guess
     // arm-l: 0-6, arm-r: 7-13, head: 14,15 waist: 16-18, leg-l: 19-24, leg-r: 25-30
-    qIk.block<7,1>(0,0)<< 0.433153883479341,    1.11739345867607,    1.88491913406236,
-            0.802378252758275,    1.22726400279662,    0.0249797771339966,  -0.0875282610654057;
+    qIk.block<7,1>(0,0)<< 0.433153883479341,    -1.11739345867607,    1.88491913406236,
+            0.802378252758275,    -0.356,    0.0,  -0.0;
 
     qIk.block<7,1>(7,0)<<-0.433152540054138,   -1.11739347975224,  -1.88492038240761,
-            0.802375980602373,   -1.22726323451626,   0.0249795712262396, 0.0875271396314979;
-
+            0.802375980602373,   0.356,   0.0, 0.0;
     const double eps  = 1e-4;
     const int IT_MAX  = 100;
     const double DT   = 6e-1;

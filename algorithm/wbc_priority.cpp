@@ -499,8 +499,8 @@ void WBC_priority::computeDdq(Pin_KinDyn &pinKinDynIn) {
 //    hd_l_eul_L_des<<-1.7581, 0.2129, 2.9581;
 //    hd_r_eul_L_des<<1.7581, 0.21291, -2.9581;
 
-        Eigen::Vector3d hd_l_eul_L_des = {-1.7581, 0.2129, 2.9581};
-        Eigen::Vector3d hd_r_eul_L_des = {1.7581, 0.2129, -2.9581};
+        Eigen::Vector3d hd_l_eul_L_des = {-1.253, 0.122, -1.732};
+        Eigen::Vector3d hd_r_eul_L_des = {1.253, 0.122, 1.732};
         Eigen::Matrix3d hd_l_rot_des = eul2Rot(hd_l_eul_L_des(0), hd_l_eul_L_des(1), hd_l_eul_L_des(2));
         Eigen::Matrix3d hd_r_rot_des = eul2Rot(hd_r_eul_L_des(0), hd_r_eul_L_des(1), hd_r_eul_L_des(2));
 
@@ -675,8 +675,8 @@ void WBC_priority::computeDdq(Pin_KinDyn &pinKinDynIn) {
         kin_tasks_stand.taskLib[id].W.diagonal()(23)=200;
 
         // define swing arm motion
-        Eigen::Vector3d hd_l_eul_L_des = {-1.7581, 0.2129, 2.9581};
-        Eigen::Vector3d hd_r_eul_L_des = {1.7581, 0.2129, -2.9581};
+        Eigen::Vector3d hd_l_eul_L_des = {-1.253, 0.122, -1.732};
+        Eigen::Vector3d hd_r_eul_L_des = {1.253, 0.122, 1.732};
         Eigen::Matrix3d hd_l_rot_des = eul2Rot(hd_l_eul_L_des(0), hd_l_eul_L_des(1), hd_l_eul_L_des(2));
         Eigen::Matrix3d hd_r_rot_des = eul2Rot(hd_r_eul_L_des(0), hd_r_eul_L_des(1), hd_r_eul_L_des(2));
 
@@ -684,8 +684,6 @@ void WBC_priority::computeDdq(Pin_KinDyn &pinKinDynIn) {
         Eigen::Vector3d shoulder2hand_l_pos_L_des = {-0.0240, 0.1584, -0.5512};
         Eigen::Vector3d base2shoulder_r_pos_L_des = {0.0040, -0.1616, 0.3922};
         Eigen::Vector3d shoulder2hand_r_pos_L_des = {-0.0240, -0.1584, -0.5512};
-//        double l_hip_pitch = 0; //q(28) - qIniDes(28);
-//        double r_hip_pitch = 0; //q(34) - qIniDes(34);
         double k = 1;
         hd_l_rot_des =
                 eul2Rot(0, -k * r_shoulder_pitch, 0) * eul2Rot(hd_l_eul_L_des(0), hd_l_eul_L_des(1), hd_l_eul_L_des(2));

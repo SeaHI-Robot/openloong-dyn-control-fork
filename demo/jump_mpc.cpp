@@ -69,10 +69,10 @@ int main(int argc, char **argv) {
 
 	Eigen::Vector3d fe_l_pos_L_base, fe_r_pos_L_base;
 
-    Eigen::Vector3d hd_l_pos_L_des={-0.02, 0.32, -0.159};
-    Eigen::Vector3d hd_r_pos_L_des={-0.02, -0.32, -0.159};
-    Eigen::Vector3d hd_l_eul_L_des={-1.7581, 0.2129, 2.9581};
-    Eigen::Vector3d hd_r_eul_L_des={1.7581, 0.2129, -2.9581};
+	Eigen::Vector3d hd_l_pos_L_des={-0.02, 0.32, -0.159};
+	Eigen::Vector3d hd_r_pos_L_des={-0.02, -0.32, -0.159};
+	Eigen::Vector3d hd_l_eul_L_des={-1.253, 0.122, -1.732};
+	Eigen::Vector3d hd_r_eul_L_des={1.253, 0.122, 1.732};
     Eigen::Matrix3d hd_l_rot_des= eul2Rot(hd_l_eul_L_des(0),hd_l_eul_L_des(1),hd_l_eul_L_des(2));
     Eigen::Matrix3d hd_r_rot_des= eul2Rot(hd_r_eul_L_des(0),hd_r_eul_L_des(1),hd_r_eul_L_des(2));
     auto resLeg = kinDynSolver.computeInK_Leg(fe_l_rot_des, fe_l_pos_L_des, fe_r_rot_des, fe_r_pos_L_des);
